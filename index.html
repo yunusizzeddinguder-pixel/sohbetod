@@ -3,54 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sohbetod Pro | Canlı Sesli Sohbet</title>
+    <title>Sohbetod Pro | Bildirimli</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #6366f1; --success: #10b981; --danger: #ef4444; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Outfit', sans-serif; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #6366f1; }
         
-        /* Lobi */
+        /* Lobi Tasarımı */
         #lobby-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 20px; color: white; text-align: center; }
-        .lobby-card { background: rgba(255, 255, 255, 0.95); color: #333; padding: 30px; border-radius: 30px; width: 100%; max-width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .lobby-card { background: white; color: #333; padding: 30px; border-radius: 30px; width: 100%; max-width: 380px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
         .room-btn { width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 15px; background: var(--primary); color: white; font-weight: 600; cursor: pointer; }
 
-        /* Uygulama */
+        /* Ana Uygulama */
         #app-container { display: none; width: 100%; height: 100%; background: white; position: relative; }
         .chat-app { width: 100%; height: 100%; display: flex; flex-direction: column; }
-
-        header { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: white; z-index: 10; }
-        
-        /* Canlı Ses Paneli */
-        #voice-status-bar { background: #f1f5f9; padding: 8px 15px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; border-bottom: 1px solid #e2e8f0; }
-        .voice-active { color: var(--success); font-weight: bold; animation: pulse 1.5s infinite; }
+        header { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: white; }
         
         #messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #f8fafc; }
 
-        /* Mesajlar */
+        /* Mesaj Balonları */
         .msg-wrapper { display: flex; flex-direction: column; max-width: 85%; }
         .sent-wrapper { align-self: flex-end; }
         .received-wrapper { align-self: flex-start; }
         .msg-box { padding: 10px 14px; border-radius: 18px; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .sent { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
         .received { background: white; color: #333; border: 1px solid #ddd; border-bottom-left-radius: 4px; }
-        .msg-img { max-width: 100%; border-radius: 12px; margin-top: 5px; }
-
-        /* Alt Araç Çubuğu */
+        
+        /* Alt Panel */
         .input-area { padding: 10px; border-top: 1px solid #eee; background: white; padding-bottom: env(safe-area-inset-bottom); }
         .input-row { display: flex; gap: 8px; align-items: center; }
         #msg-input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid #ddd; font-size: 16px; outline: none; }
-        .btn-icon { width: 44px; height: 44px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #f1f5f9; font-size: 18px; }
+        .btn-icon { width: 44px; height: 44px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #f1f5f9; font-size: 20px; }
+        .recording { background: var(--danger) !important; color: white !important; animation: pulse 1s infinite; }
         
-        .mic-on { background: var(--success) !important; color: white !important; }
-        .mic-off { background: var(--danger) !important; color: white !important; }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        /* Grup Bilgi Paneli */
+        #group-info-panel { position: absolute; top: 0; right: -100%; width: 100%; height: 100%; background: white; z-index: 1000; padding: 25px; transition: 0.3s; display: flex; flex-direction: column; }
+        #group-info-panel.active { right: 0; }
         
-        #emoji-picker, #action-menu { position: absolute; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: none; z-index: 2000; padding: 10px; border: 1px solid #eee; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
+
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3" preload="auto"></audio>
 
     <div id="lobby-screen">
         <h1 style="font-size: 2.5rem; margin-bottom: 20px;">Sohbetod</h1>
@@ -64,38 +60,29 @@
     </div>
 
     <div id="app-container">
-        <div id="remote-audios"></div>
-        
-        <div id="emoji-picker">
-            <span onclick="react('❤️')">❤️</span> <span onclick="react('😂')">😂</span> <span onclick="react('🔥')">🔥</span> <span onclick="react('👍')">👍</span>
-        </div>
-        
-        <div id="action-menu">
-            <div style="padding:10px;" onclick="startEdit()">📝 Düzenle</div>
-            <div style="padding:10px; color:red;" onclick="deleteMsg()">🗑️ Sil</div>
+        <div id="group-info-panel">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 style="margin:0">Grup Bilgileri</h2>
+                <button onclick="toggleInfo()" style="background:none; border:none; font-size:24px;">✕</button>
+            </div>
+            <div id="user-list"></div>
+            <button onclick="location.reload()" style="margin-top:auto; padding:15px; border:none; background:#fee2e2; color:red; border-radius:15px; font-weight:bold;">ÇIKIŞ YAP</button>
         </div>
 
         <div class="chat-app">
             <header>
-                <div onclick="location.reload()" style="cursor:pointer">
-                    <span style="font-size:10px; color:var(--primary); font-weight:bold;">← LOBİ</span><br>
+                <div onclick="toggleInfo()" style="cursor:pointer">
+                    <span style="font-size:10px; color:var(--primary); font-weight:bold;">ℹ️ GRUP BİLGİSİ</span><br>
                     <b id="active-room-name">#oda</b>
                 </div>
-                <div style="display:flex; gap:8px;">
-                    <button id="voice-call-btn" class="btn-icon" onclick="toggleLiveVoice()">📞</button>
-                    <button class="btn-icon" onclick="shareRoom()">🔗</button>
-                </div>
+                <button class="btn-icon" onclick="shareRoom()" style="background:none;">🔗</button>
             </header>
 
-            <div id="voice-status-bar" style="display:none;">
-                <span id="voice-info" class="voice-active">● Canlı Sesli Sohbet Aktif</span>
-                <span id="speaker-list" style="font-size:11px; color:#64748b;"></span>
-            </div>
-
-            <div id="messages" onclick="closeMenus()"></div>
+            <div id="messages"></div>
 
             <div class="input-area">
                 <div class="input-row">
+                    <button id="voice-msg-btn" class="btn-icon" onclick="toggleVoiceMessage()">🎤</button>
                     <input type="file" id="img-input" accept="image/*" style="display:none" onchange="sendImage(this)">
                     <button class="btn-icon" onclick="document.getElementById('img-input').click()">🖼️</button>
                     <input type="text" id="msg-input" placeholder="Mesaj yaz..." autocomplete="off">
@@ -107,7 +94,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded, onValue, set, get, update, remove, onDisconnect, onChildChanged, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, push, onChildAdded, onValue, set, get, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = { 
@@ -124,11 +111,25 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    let myName, myRoom, currentPath, selectedMsgId;
-    let localStream, peerConnection;
+    let myName, myRoom, currentPath;
+    let mediaRecorder, audioChunks = [];
+    let isTabActive = true;
 
-    // --- GİRİŞ ---
-    document.getElementById("google-login-btn").onclick = () => signInWithPopup(auth, provider);
+    // Sekme odağını takip et
+    window.onfocus = () => isTabActive = true;
+    window.onblur = () => isTabActive = false;
+
+    // Bildirim İzni İste
+    async function requestNotifPermission() {
+        if (Notification.permission !== 'granted') {
+            await Notification.requestPermission();
+        }
+    }
+
+    document.getElementById("google-login-btn").onclick = () => {
+        requestNotifPermission();
+        signInWithPopup(auth, provider);
+    };
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -146,7 +147,7 @@
         name = name.toLowerCase().replace(/\s+/g, '-');
         const roomRef = ref(db, `room_configs/${name}`);
         const snap = await get(roomRef);
-        let pass = snap.exists() ? prompt("Şifre:") : prompt("Yeni oda şifresi belirle:");
+        let pass = snap.exists() ? prompt("Oda Şifresi:") : prompt("Yeni Şifre:");
         
         if (snap.exists() && pass !== snap.val().pass) return alert("Hatalı!");
         if (!snap.exists()) await set(roomRef, { pass: pass || "123" });
@@ -156,131 +157,92 @@
         document.getElementById("lobby-screen").style.display = "none";
         document.getElementById("app-container").style.display = "block";
         document.getElementById("active-room-name").innerText = "#" + myRoom;
+        
+        const presenceRef = ref(db, `rooms/${myRoom}/users/${myName}`);
+        set(presenceRef, true);
+        onDisconnect(presenceRef).remove();
         loadChat();
     };
 
-    // --- CANLI SESLİ KONUŞMA (BASİT MANTIĞI) ---
-    // Not: Tam WebRTC için bir Signaling Server gerekir, burada Firebase üzerinden 
-    // odadaki aktif konuşmacı durumunu simüle eden bir yapı kuruyoruz.
-    window.toggleLiveVoice = async () => {
-        const btn = document.getElementById("voice-call-btn");
-        const bar = document.getElementById("voice-status-bar");
-        const voiceRef = ref(db, `rooms/${myRoom}/voice/${myName}`);
-
-        if (!localStream) {
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                set(voiceRef, true);
-                onDisconnect(voiceRef).remove();
-                btn.classList.add("mic-on");
-                bar.style.display = "flex";
-                alert("Canlı ses bağlantısı kuruldu. Odadakiler sizi duyabilir.");
-            } catch (e) { alert("Mikrofon izni alınamadı."); }
-        } else {
-            localStream.getTracks().forEach(t => t.stop());
-            localStream = null;
-            remove(voiceRef);
-            btn.classList.remove("mic-on");
-            bar.style.display = "none";
-        }
-    };
-
-    // Odadaki konuşmacıları izle
-    function watchSpeakers() {
-        onValue(ref(db, `rooms/${myRoom}/voice`), (s) => {
-            const speakers = s.val() ? Object.keys(s.val()) : [];
-            document.getElementById("speaker-list").innerText = speakers.length > 0 ? 
-                "Konuşanlar: " + speakers.join(", ") : "Kimse konuşmuyor";
-        });
-    }
-
-    // --- SOHBET SİSTEMİ ---
     function loadChat() {
-        watchSpeakers();
-        const msgDiv = document.getElementById("messages");
-        onChildAdded(ref(db, currentPath), (s) => renderMsg(s.key, s.val()));
-        onChildChanged(ref(db, currentPath), (s) => {
-            const txt = document.getElementById("text-"+s.key);
-            if(txt) txt.innerText = s.val().m;
-            updateReactsUI(s.key, s.val().reactions);
+        let firstLoad = true;
+        onChildAdded(ref(db, currentPath), (s) => {
+            const data = s.val();
+            renderMsg(s.key, data);
+            
+            // Yeni mesaj bildirimi (Sadece mesaj bizden değilse ve sayfa yüklendikten sonra)
+            if (!firstLoad && data.u !== myName) {
+                document.getElementById("notif-sound").play();
+                if (!isTabActive && Notification.permission === 'granted') {
+                    new Notification("Sohbetod", { body: `${data.u}: ${data.m || "Bir medya gönderdi"}`, icon: "https://cdn-icons-png.flaticon.com/512/5962/5962461.png" });
+                }
+            }
         });
-        onChildRemoved(ref(db, currentPath), (s) => document.getElementById("wrap-"+s.key)?.remove());
+        // İlk yükleme bittiğinde işaretle
+        setTimeout(() => { firstLoad = false; }, 2000);
+
+        onValue(ref(db, `rooms/${myRoom}/users`), (s) => {
+            const users = s.val() || {};
+            document.getElementById("user-list").innerHTML = Object.keys(users).map(u => `<div style="padding:10px; background:#f1f5f9; margin-bottom:5px; border-radius:10px;">👤 ${u}</div>`).join('');
+        });
     }
 
     function renderMsg(id, data) {
         const isMe = data.u === myName;
         const html = `
-            <div class="msg-wrapper ${isMe ? 'sent-wrapper' : 'received-wrapper'}" id="wrap-${id}">
-                <div class="msg-box ${isMe ? 'sent' : 'received'}" onclick="showMenu(event, '${id}', '${data.u}')">
+            <div class="msg-wrapper ${isMe ? 'sent-wrapper' : 'received-wrapper'}">
+                <div class="msg-box ${isMe ? 'sent' : 'received'}">
                     <small style="font-size:10px; opacity:0.7; display:block;">${data.u}</small>
-                    ${data.img ? `<img src="${data.img}" class="msg-img">` : `<span id="text-${id}">${data.m}</span>`}
+                    ${data.img ? `<img src="${data.img}" class="msg-img">` : ''}
+                    ${data.v ? `<audio src="${data.v}" controls></audio>` : ''}
+                    ${data.m ? `<span>${data.m}</span>` : ''}
                 </div>
-                <div id="reacts-${id}" style="font-size:12px; margin-top:2px;"></div>
             </div>`;
         document.getElementById("messages").insertAdjacentHTML('beforeend', html);
-        updateReactsUI(id, data.reactions);
         document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
     }
 
-    window.send = (img = null) => {
+    window.send = (img = null, voice = null) => {
         const inp = document.getElementById("msg-input");
-        if (inp.value || img) {
-            push(ref(db, currentPath), { u: myName, m: inp.value, img: img, t: Date.now() });
+        if (inp.value || img || voice) {
+            push(ref(db, currentPath), { u: myName, m: inp.value || null, img: img || null, v: voice || null, t: Date.now() });
             inp.value = "";
         }
     };
 
-    window.sendImage = (input) => {
-        const file = input.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => send(e.target.result);
-            reader.readAsDataURL(file);
+    window.sendImage = (i) => {
+        const file = i.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => send(e.target.result);
+        reader.readAsDataURL(file);
+    };
+
+    window.toggleVoiceMessage = async () => {
+        const btn = document.getElementById("voice-msg-btn");
+        if (!mediaRecorder || mediaRecorder.state === "inactive") {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = () => send(null, reader.result);
+            };
+            mediaRecorder.start();
+            btn.classList.add("recording");
+        } else {
+            mediaRecorder.stop();
+            btn.classList.remove("recording");
         }
     };
 
-    window.showMenu = (e, id, user) => {
-        e.stopPropagation();
-        selectedMsgId = id;
-        document.getElementById("emoji-picker").style.display = "flex";
-        document.getElementById("emoji-picker").style.top = (e.clientY - 60) + "px";
-        if (user === myName) {
-            document.getElementById("action-menu").style.display = "block";
-            document.getElementById("action-menu").style.top = (e.clientY + 20) + "px";
-        }
-    };
-
-    window.react = (emoji) => {
-        update(ref(db, `${currentPath}/${selectedMsgId}/reactions`), { [myName]: emoji });
-        closeMenus();
-    };
-
-    function updateReactsUI(id, reacts) {
-        const div = document.getElementById("reacts-"+id);
-        if(div) div.innerHTML = reacts ? Object.values(reacts).join(' ') : '';
-    }
-
-    window.startEdit = () => {
-        const old = document.getElementById("text-"+selectedMsgId).innerText;
-        const n = prompt("Düzenle:", old);
-        if(n) update(ref(db, `${currentPath}/${selectedMsgId}`), { m: n });
-        closeMenus();
-    };
-
-    window.deleteMsg = () => {
-        if(confirm("Silinsin mi?")) remove(ref(db, `${currentPath}/${selectedMsgId}`));
-        closeMenus();
-    };
-
-    window.closeMenus = () => {
-        document.getElementById("emoji-picker").style.display = "none";
-        document.getElementById("action-menu").style.display = "none";
-    };
-
+    window.toggleInfo = () => document.getElementById("group-info-panel").classList.toggle("active");
     window.shareRoom = () => {
         const url = window.location.origin + window.location.pathname + "?room=" + myRoom;
         navigator.clipboard.writeText(url);
-        alert("Oda linki kopyalandı!");
+        alert("Link kopyalandı!");
     };
 </script>
 </body>
