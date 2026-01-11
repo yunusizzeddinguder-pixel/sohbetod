@@ -9,151 +9,131 @@
     <meta name="keywords" content="sohbetod, sohbet odası, şifreli mesajlaşma, sesli mesaj, güvenli chat">
     <meta name="author" content="Yunus Izzeddin Güder">
 
-    
-
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #6366f1; --secondary: #a855f7; --glass: rgba(255, 255, 255, 0.92); --bg: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
         * { box-sizing: border-box; transition: all 0.2s ease; font-family: 'Outfit', sans-serif; }
         body { background: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         
-        .app-container { width: 100%; max-width: 420px; height: 95vh; background: var(--glass); backdrop-filter: blur(20px); border-radius: 35px; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.4); }
+        /* Giriş Ekranı Tasarımı */
+        #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100vh; text-align: center; color: white; padding: 20px; }
+        .login-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 40px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
         
-        /* Grup/Üye Paneli */
-        #group-info-panel { position: absolute; top: 0; right: -100%; width: 100%; height: 100%; background: white; z-index: 1000; padding: 40px 25px; display: flex; flex-direction: column; }
+        /* Ana Konteyner */
+        #app-container { display: none; width: 100%; height: 100vh; justify-content: center; align-items: center; padding: 10px; }
+        .chat-app { width: 100%; max-width: 420px; height: 95vh; background: var(--glass); backdrop-filter: blur(20px); border-radius: 35px; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.4); }
+
+        /* Yan Panel */
+        #group-info-panel { position: absolute; top: 0; right: -100%; width: 100%; height: 100%; background: white; z-index: 1000; padding: 30px 20px; display: flex; flex-direction: column; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         #group-info-panel.active { right: 0; }
-        .user-item { padding: 12px; border-radius: 12px; background: #f1f5f9; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+        .user-item { padding: 12px; border-radius: 12px; background: #f1f5f9; margin-bottom: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 14px; }
 
         header { padding: 15px 20px; background: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
-        #messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background: #f8fafc; }
+        #messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #f8fafc; scroll-behavior: smooth; }
 
-        /* Mesaj Balonları ve Reaksiyonlar */
-        .msg-wrapper { display: flex; flex-direction: column; max-width: 85%; margin-bottom: 5px; position: relative; }
+        /* Mesaj Balonları */
+        .msg-wrapper { display: flex; flex-direction: column; max-width: 85%; position: relative; margin-bottom: 4px; }
         .sent-wrapper { align-self: flex-end; align-items: flex-end; }
         .received-wrapper { align-self: flex-start; align-items: flex-start; }
         
-        .msg-box { padding: 10px 14px; border-radius: 18px; position: relative; cursor: pointer; font-size: 0.95rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .msg-box { padding: 10px 14px; border-radius: 18px; position: relative; cursor: pointer; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); word-wrap: break-word; }
         .sent { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
         .received { background: white; color: #333; border-bottom-left-radius: 4px; border: 1px solid #eee; }
         
-        .reactions-row { display: flex; gap: 4px; margin-top: -10px; z-index: 10; padding: 0 5px; }
-        .reaction-badge { background: white; border: 1px solid #eee; border-radius: 10px; padding: 1px 5px; font-size: 11px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        /* Reaksiyonlar */
+        .reactions-row { display: flex; gap: 4px; margin-top: -8px; z-index: 10; padding: 0 5px; pointer-events: none; }
+        .reaction-badge { background: white; border: 1px solid #eee; border-radius: 10px; padding: 1px 4px; font-size: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-        /* Pop-up Menüler */
-        #action-menu, #reaction-picker { position: absolute; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: none; z-index: 2000; border: 1px solid #eee; }
-        #action-menu { flex-direction: column; overflow: hidden; }
-        .menu-item { padding: 10px 20px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #eee; }
-        .menu-item:hover { background: #f5f5f5; }
+        /* Menüler */
+        #action-menu, #reaction-picker { position: absolute; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: none; z-index: 2000; border: 1px solid #eee; }
+        #action-menu { flex-direction: column; overflow: hidden; min-width: 120px; }
+        .menu-item { padding: 12px 15px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
+        .menu-item:hover { background: #f8fafc; }
         
-        #reaction-picker { padding: 8px 12px; gap: 10px; border-radius: 30px; }
-        #reaction-picker span { font-size: 1.4rem; cursor: pointer; }
+        #reaction-picker { padding: 8px 15px; gap: 12px; border-radius: 30px; }
+        #reaction-picker span { font-size: 1.5rem; cursor: pointer; transition: 0.2s; }
         #reaction-picker span:hover { transform: scale(1.3); }
 
-        /* Alt Alan */
+        /* Mesaj Yazma Alanı */
         .input-area { padding: 10px 15px; background: white; border-top: 1px solid #eee; }
-        .emoji-bar { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; font-size: 1.3rem; }
-        .emoji-bar::-webkit-scrollbar { display: none; }
         .input-row { display: flex; gap: 8px; align-items: center; }
-        #msg-input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
-        
-        .btn-circle { width: 42px; height: 42px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        #msg-input { flex: 1; padding: 12px 18px; border-radius: 25px; border: 1px solid #e2e8f0; outline: none; background: #f8fafc; }
+        .btn-circle { width: 42px; height: 42px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
         #voice-btn { background: #fee2e2; color: #ef4444; }
         #voice-btn.recording { background: #ef4444; color: white; animation: pulse 1s infinite; }
         #send-btn { background: var(--primary); color: white; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         
-        audio { height: 35px; width: 160px; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        audio { height: 35px; width: 160px; margin-top: 5px; }
     </style>
-    <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "Sohbetod",
-  "operatingSystem": "Web",
-  "applicationCategory": "CommunicationApplication",
-  "offers": {
-    "@type": "Offer",
-    "price": "0"
-  }
-}
-</script>
 </head>
 <body>
-    <div id="login-screen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #f8fafc; text-align: center; font-family: 'Outfit', sans-serif;">
-    <h1 style="color: #1e293b; margin-bottom: 10px;">Sohbetod</h1>
-    <p style="color: #64748b; margin-bottom: 30px;">Güvenli giriş yapmak için Google hesabınızı kullanın.</p>
-    
-    <button id="google-login-btn" style="padding: 12px 24px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; font-weight: 600; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); transition: all 0.2s; font-size: 16px;">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
-        Google ile Giriş Yap
-    </button>
-</div>
-    <div id="app-container" style="display: none;">
-<audio id="notification-sound" src="https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3" preload="auto"></audio>
-<div id="reaction-picker">
-    <span onclick="applyReaction('❤️')">❤️</span>
-    <span onclick="applyReaction('😂')">😂</span>
-    <span onclick="applyReaction('🔥')">🔥</span>
-    <span onclick="applyReaction('😮')">😮</span>
-    <span onclick="applyReaction('👍')">👍</span>
-</div>
 
-<div id="action-menu">
-    <div class="menu-item" onclick="openEdit()">📝 Düzenle</div>
-    <div class="menu-item" onclick="deleteMessage()" style="color:red">🗑️ Sil</div>
-</div>
-
-<div class="app-container">
-    <div id="group-info-panel">
-        <h3 onclick="toggleInfo()" style="cursor:pointer">← Geri</h3>
-        <p style="color:gray; font-size:12px;">AKTİF ÜYELER</p>
-        <div id="user-list" style="flex:1; overflow-y:auto;"></div>
-        <button onclick="location.reload()" style="padding:15px; background:#fee2e2; color:#ef4444; border:none; border-radius:15px; cursor:pointer; font-weight:600;">Oturumu Kapat</button>
+    <div id="login-screen">
+        <div class="login-card">
+            <h1 style="font-size: 3rem; margin: 0 0 10px 0;">Sohbetod</h1>
+            <p style="opacity: 0.8; margin-bottom: 30px;">Güvenli ve şifreli mesajlaşmanın adresi.</p>
+            <button id="google-login-btn" style="padding: 15px 25px; border-radius: 15px; border: none; background: white; cursor: pointer; display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 1rem; color: #1e293b; width: 100%; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+                Google ile Giriş Yap
+            </button>
+        </div>
     </div>
 
-    <div id="login-screen" style="padding: 40px; text-align: center; height:100%; display:flex; flex-direction:column; justify-content:center;">
-        <h1 style="color:var(--primary); font-size:3rem; margin:0;">Sohbetod</h1>
-        <p style="color:gray; margin-bottom:25px;">Tam donanımlı şifreli mesajlaşma.</p>
-        <input type="text" id="username" placeholder="Kullanıcı Adınız" style="width:100%; padding:15px; margin-bottom:10px; border-radius:15px; border:1px solid #ddd;">
-        <input type="text" id="room-id" placeholder="Oda Adı" style="width:100%; padding:15px; margin-bottom:10px; border-radius:15px; border:1px solid #ddd;">
-        <input type="password" id="room-pass" placeholder="Oda Şifresi" style="width:100%; padding:15px; margin-bottom:20px; border-radius:15px; border:1px solid #ddd;">
-        <button onclick="join()" style="width:100%; padding:18px; background:var(--primary); color:white; border:none; border-radius:15px; cursor:pointer; font-weight:600;">Giriş Yap</button>
-    </div>
+    <div id="app-container">
+        <audio id="notification-sound" src="https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3" preload="auto"></audio>
+        
+        <div id="reaction-picker">
+            <span onclick="applyReaction('❤️')">❤️</span>
+            <span onclick="applyReaction('😂')">😂</span>
+            <span onclick="applyReaction('🔥')">🔥</span>
+            <span onclick="applyReaction('😮')">😮</span>
+            <span onclick="applyReaction('👍')">👍</span>
+        </div>
+        <div id="action-menu">
+            <div class="menu-item" onclick="openEdit()">📝 Düzenle</div>
+            <div class="menu-item" onclick="deleteMessage()" style="color:red">🗑️ Sil</div>
+        </div>
 
-    <div id="chat-screen" style="display:none; flex-direction:column; height:100%;">
-        <header>
-            <div onclick="toggleInfo()" style="cursor:pointer">
-                <span id="chat-type" style="font-size:10px; color:var(--primary); font-weight:600;">🔒 ŞİFRELİ</span><br>
-                <b id="room-display">#oda</b>
+        <div class="chat-app">
+            <div id="group-info-panel">
+                <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 onclick="toggleInfo()" style="cursor:pointer; margin:0;">← Geri</h3>
+                    <span style="font-size: 12px; color: #6366f1; font-weight: bold;">SOHBETOD v2</span>
+                </div>
+                <p style="color:gray; font-size:11px; letter-spacing: 1px; font-weight: bold;">AKTİF ÜYELER</p>
+                <div id="user-list" style="flex:1; overflow-y:auto;"></div>
+                <button onclick="logout()" style="padding:15px; background:#fee2e2; color:#ef4444; border:none; border-radius:15px; cursor:pointer; font-weight:600; margin-top: 10px;">Oturumu Kapat</button>
             </div>
-            <div style="display:flex; gap:10px; align-items:center;">
-                <button id="back-btn" onclick="exitPrivate()" style="display:none; background:#f59e0b; border:none; color:white; padding:5px 10px; border-radius:8px; font-size:11px;">Geri</button>
-                <div onclick="toggleInfo()" style="cursor:pointer; font-size:1.2rem;">ℹ️</div>
-            </div>
-        </header>
 
-        <div id="messages" onclick="closeAllMenus()"></div>
+            <header>
+                <div onclick="toggleInfo()" style="cursor:pointer">
+                    <span style="font-size:10px; color:var(--primary); font-weight:600; letter-spacing: 1px;">🔒 UÇTAN UCA</span><br>
+                    <b id="room-display">#oda</b>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button id="back-btn" onclick="exitPrivate()" style="display:none; background:#f59e0b; border:none; color:white; padding:5px 12px; border-radius:10px; font-size:11px; font-weight: bold;">DÖN</button>
+                    <div onclick="toggleInfo()" style="cursor:pointer; font-size:1.3rem;">👤</div>
+                </div>
+            </header>
 
-        <div class="input-area">
-            <div class="emoji-bar">
-                <span onclick="addEmoji('😊')">😊</span><span onclick="addEmoji('😂')">😂</span><span onclick="addEmoji('🤣')">🤣</span><span onclick="addEmoji('😍')">😍</span><span onclick="addEmoji('🤔')">🤔</span><span onclick="addEmoji('🔥')">🔥</span><span onclick="addEmoji('✨')">✨</span><span onclick="addEmoji('👍')">👍</span>
-            </div>
-            <div class="input-row">
-                <button id="voice-btn" class="btn-circle" onclick="toggleVoice()">🎤</button>
-                <input type="text" id="msg-input" placeholder="Bir şeyler yazın...">
-                <button id="send-btn" class="btn-circle" onclick="send()">➤</button>
+            <div id="messages" onclick="closeAllMenus()"></div>
+
+            <div class="input-area">
+                <div class="input-row">
+                    <button id="voice-btn" class="btn-circle" onclick="toggleVoice()">🎤</button>
+                    <input type="text" id="msg-input" placeholder="Mesajınızı yazın..." onkeypress="if(event.key==='Enter') send()">
+                    <button id="send-btn" class="btn-circle" onclick="send()">➤</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 <script type="module">
-    // 1. Gerekli Firebase Modülleri
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, onChildAdded, onValue, set, update, remove, get, onChildChanged, onDisconnect, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-   // Firebase Yapılandırması (Senin paylaştığın bilgilerle güncellendi)
     const firebaseConfig = { 
         apiKey: "AIzaSyCqhaA5yE-V_88mNovVQHOC9k90hsrUYVM",
         authDomain: "sohbet-1e450.firebaseapp.com",
@@ -161,87 +141,83 @@
         projectId: "sohbet-1e450",
         storageBucket: "sohbet-1e450.firebasestorage.app",
         messagingSenderId: "339709433578",
-        appId: "1:339709433578:web:847062b4f5f7e07633e993",
-        measurementId: "G-TPLTJ2YXRM"
+        appId: "1:339709433578:web:847062b4f5f7e07633e993"
     };
-
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    let myName, myRoom, currentPath, activeMsgId, mediaRecorder, audioChunks = [];
+    let myName, myRoom = "genel", currentPath, activeMsgId, mediaRecorder, audioChunks = [];
 
-    // --- OTURUM YÖNETİMİ VE GİRİŞ ---
-
-    // Google Butonuna Tıklama
+    // --- GİRİŞ VE OTURUM ---
     document.getElementById("google-login-btn").onclick = () => {
-        signInWithPopup(auth, provider).catch(err => alert("Giriş Hatası: " + err.message));
+        signInWithPopup(auth, provider).catch(err => alert("Giriş başarısız: " + err.message));
     };
 
-    // Oturum Durumunu Dinle
+    window.logout = () => {
+        if(confirm("Çıkış yapmak istediğine emin misin?")) {
+            signOut(auth).then(() => location.reload());
+        }
+    };
+
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            // Giriş Başarılı
             myName = user.displayName;
             document.getElementById("login-screen").style.display = "none";
             document.getElementById("app-container").style.display = "flex";
-            
-            // Varsayılan olarak Genel odaya al (veya son kaldığı oda)
-            myRoom = "genel";
             loadChat(`rooms/${myRoom}/msgs`, `#GenelSohbet`);
             
-            // Kullanıcıyı odaya kaydet (Online listesi)
             const pRef = ref(db, `rooms/${myRoom}/users/${myName}`);
             set(pRef, true);
             onDisconnect(pRef).remove();
         } else {
-            // Giriş Yapılmamış
             document.getElementById("login-screen").style.display = "flex";
             document.getElementById("app-container").style.display = "none";
         }
     });
 
-    // --- SOHBET FONKSİYONLARI ---
-
-    window.toggleInfo = () => document.getElementById("group-info-panel").classList.toggle("active");
-    window.addEmoji = (e) => document.getElementById("msg-input").value += e;
-
-    function loadChat(path, title) {
+    // --- SOHBET MANTIK ---
+    window.loadChat = function(path, title) {
         currentPath = path;
         document.getElementById("messages").innerHTML = "";
         document.getElementById("room-display").innerText = title;
 
-        onChildAdded(ref(db, currentPath), (s) => {
+        const chatRef = ref(db, currentPath);
+        onChildAdded(chatRef, (s) => {
             const data = s.val();
             renderMessage(s.key, data);
-
-            // Bildirim Sesi
             if (data.u !== myName) {
                 const sound = document.getElementById("notification-sound");
-                if (sound) sound.play().catch(e => console.log("Ses engellendi"));
+                if (sound) sound.play().catch(() => {});
             }
         });
 
-        onChildChanged(ref(db, currentPath), (s) => updateUIMessage(s.key, s.val()));
-        onChildRemoved(ref(db, currentPath), (s) => document.getElementById("msg-wrapper-"+s.key)?.remove());
+        onChildChanged(chatRef, (s) => {
+            const txt = document.getElementById("text-"+s.key); 
+            if(txt) txt.innerText = s.val().m;
+            updateReactionsUI(s.key, s.val().reactions);
+        });
+
+        onChildRemoved(chatRef, (s) => {
+            document.getElementById("msg-wrapper-"+s.key)?.remove();
+        });
         
-        // Kullanıcı Listesini Güncelle
         onValue(ref(db, `rooms/${myRoom}/users`), (s) => {
             const users = s.val() || {};
             document.getElementById("user-list").innerHTML = Object.keys(users).map(u => `
                 <div class="user-item" onclick="startPrivate('${u}')">
                     <span>${u} ${u === myName ? '(Sen)' : ''}</span>
-                    <span style="color:var(--primary); font-size:10px;">MESAJ GÖNDER</span>
+                    <span style="color:var(--primary); font-size:10px;">FISILDA</span>
                 </div>
             `).join('');
         });
-    }
+    };
 
     window.send = (v = null) => {
         const input = document.getElementById("msg-input");
-        if(input.value || v) {
+        if(input.value.trim() || v) {
             push(ref(db, currentPath), { 
                 u: myName, 
                 m: v ? "[Sesli Not]" : input.value, 
@@ -255,22 +231,17 @@
 
     function renderMessage(id, data) {
         const isMe = data.u === myName;
-        if(!isMe && !data.read) update(ref(db, `${currentPath}/${id}`), { read: true });
-
         const wrap = document.createElement("div");
         wrap.className = `msg-wrapper ${isMe ? 'sent-wrapper' : 'received-wrapper'}`;
         wrap.id = "msg-wrapper-" + id;
-        
         wrap.innerHTML = `
-            <div class="msg-box ${isMe ? 'sent' : 'received'}" id="msg-${id}" 
-                 onclick="handleMessageClick('${id}', '${data.u}', event)">
-                <small style="font-size:8px; display:block; margin-bottom:3px; opacity:0.8;">${data.u}</small>
+            <div class="msg-box ${isMe ? 'sent' : 'received'}" id="msg-${id}" onclick="handleMessageClick('${id}', '${data.u}', event)">
+                <small style="font-size:9px; display:block; margin-bottom:4px; opacity:0.8; font-weight:bold;">${data.u}</small>
                 ${data.v ? `<audio src="${data.v}" controls></audio>` : `<span id="text-${id}">${data.m}</span>`}
             </div>
             <div class="reactions-row" id="reacts-${id}"></div>
-            <div class="status-info" id="status-container-${id}">
-                ${new Date(data.t).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} 
-                <span id="read-${id}" style="color:#34d399">${data.read ? '✓✓' : '✓'}</span>
+            <div style="font-size:9px; margin-top:3px; opacity:0.6;">
+                ${new Date(data.t).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
             </div>
         `;
         document.getElementById("messages").appendChild(wrap);
@@ -278,16 +249,11 @@
         document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
     }
 
-    function updateUIMessage(id, data) {
-        const txt = document.getElementById("text-"+id); if(txt) txt.innerText = data.m;
-        const read = document.getElementById("read-"+id); if(read) read.innerText = data.read ? '✓✓' : '✓';
-        updateReactionsUI(id, data.reactions);
-    }
-
     function updateReactionsUI(id, reactions) {
         const container = document.getElementById("reacts-"+id);
-        if(!container) return;
-        container.innerHTML = reactions ? Object.values(reactions).map(r => `<div class="reaction-badge">${r}</div>`).join('') : '';
+        if(container) {
+            container.innerHTML = reactions ? Object.values(reactions).map(r => `<div class="reaction-badge">${r}</div>`).join('') : '';
+        }
     }
 
     window.handleMessageClick = (id, user, e) => {
@@ -298,7 +264,7 @@
         const picker = document.getElementById("reaction-picker");
         picker.style.display = "flex";
         picker.style.top = (e.clientY - 60) + "px";
-        picker.style.left = Math.min(e.clientX, window.innerWidth - 200) + "px";
+        picker.style.left = Math.min(e.clientX, window.innerWidth - 220) + "px";
 
         if(user === myName) {
             const menu = document.getElementById("action-menu");
@@ -319,14 +285,18 @@
     };
 
     window.deleteMessage = () => {
-        remove(ref(db, `${currentPath}/${activeMsgId}`));
-        closeAllMenus();
+        if(confirm("Bu mesajı silmek istiyor musun?")) {
+            remove(ref(db, `${currentPath}/${activeMsgId}`));
+            closeAllMenus();
+        }
     };
 
     window.openEdit = () => {
-        const oldMsg = document.getElementById("text-"+activeMsgId).innerText;
-        const n = prompt("Mesajı düzenle:", oldMsg);
-        if(n && n !== oldMsg) update(ref(db, `${currentPath}/${activeMsgId}`), { m: n });
+        const oldTxt = document.getElementById("text-"+activeMsgId).innerText;
+        const n = prompt("Mesajı düzenle:", oldTxt);
+        if(n && n !== oldTxt) {
+            update(ref(db, `${currentPath}/${activeMsgId}`), { m: n });
+        }
         closeAllMenus();
     };
 
@@ -340,38 +310,35 @@
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = () => {
                     const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                    const reader = new FileReader(); 
+                    const reader = new FileReader();
                     reader.readAsDataURL(blob);
                     reader.onloadend = () => send(reader.result);
                 };
                 mediaRecorder.start(); 
                 btn.classList.add("recording");
-            } catch(e) { alert("Mikrofon izni gerekli!"); }
+                btn.innerText = "⏹️";
+            } catch(e) { alert("Mikrofon izni reddedildi."); }
         } else { 
             mediaRecorder.stop(); 
             btn.classList.remove("recording"); 
+            btn.innerText = "🎤";
         }
     };
 
-    window.startPrivate = (u) => { 
-        if(u !== myName) { 
-            loadChat(`privates/${[myName, u].sort().join("_")}`, `@${u}`); 
-            document.getElementById("back-btn").style.display="block"; 
-            if(window.innerWidth < 768) toggleInfo(); 
-        } 
+    window.startPrivate = (u) => {
+        if(u !== myName) {
+            loadChat(`privates/${[myName, u].sort().join("_")}`, `@${u}`);
+            document.getElementById("back-btn").style.display="block";
+            toggleInfo();
+        }
     };
 
-    window.exitPrivate = () => { 
-        loadChat(`rooms/${myRoom}/msgs`, `#${myRoom}`); 
-        document.getElementById("back-btn").style.display="none"; 
+    window.exitPrivate = () => {
+        loadChat(`rooms/${myRoom}/msgs`, `#GenelSohbet`);
+        document.getElementById("back-btn").style.display="none";
     };
+
+    window.toggleInfo = () => document.getElementById("group-info-panel").classList.toggle("active");
 </script>
-    </div>
 </body>
-
 </html>
-
-
-
-
-
