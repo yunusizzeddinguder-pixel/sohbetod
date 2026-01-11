@@ -64,9 +64,22 @@
         
         audio { height: 35px; width: 160px; }
     </style>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Sohbetod",
+  "operatingSystem": "Web",
+  "applicationCategory": "CommunicationApplication",
+  "offers": {
+    "@type": "Offer",
+    "price": "0"
+  }
+}
+</script>
 </head>
 <body>
-
+<audio id="notification-sound" src="https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3" preload="auto"></audio>
 <div id="reaction-picker">
     <span onclick="applyReaction('❤️')">❤️</span>
     <span onclick="applyReaction('😂')">😂</span>
@@ -168,9 +181,20 @@
         currentPath = path;
         document.getElementById("messages").innerHTML = "";
         document.getElementById("room-display").innerText = title;
-        onChildAdded(ref(db, currentPath), (s) => renderMessage(s.key, s.val()));
+        onChildAdded(ref(db, currentPath), (s) => {
+            const data = s.val();
+            renderMessage(s.key, data);
+
+            // Eğer mesajı gönderen başkasıysa ve mesaj yeniyse ses çal
+            if (data.u !== myName) {
+                const sound = document.getElementById("notification-sound");
+                if (sound) {
+                    sound.play().catch(e => console.log("Ses çalma engellendi: ", e));
+                }
+            }
+        });
         onChildChanged(ref(db, currentPath), (s) => updateUIMessage(s.key, s.val()));
-        onChildRemoved(ref(db, currentPath), (s) => document.getElementById("msg-wrapper-"+s.key)?.remove());
+        onChildRemoved(ref(db, currentPath), (s) => document.getElementById("msg-wrapper-"+s.key)?.remove());;
     }
 
     window.send = (v = null) => {
@@ -279,4 +303,5 @@
 </body>
 
 </html>
+
 
