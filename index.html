@@ -79,6 +79,14 @@
 </script>
 </head>
 <body>
+    <div id="login-screen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
+    <h2 style="font-family: 'Outfit', sans-serif;">Sohbetod'a Hoş Geldiniz</h2>
+    <button id="google-login-btn" style="padding: 10px 20px; border-radius: 8px; border: 1px solid #ddd; background: white; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+        Google ile Giriş Yap
+    </button>
+</div>
+    <div id="app-container" style="display: none;">
 <audio id="notification-sound" src="https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3" preload="auto"></audio>
 <div id="reaction-picker">
     <span onclick="applyReaction('❤️')">❤️</span>
@@ -138,34 +146,84 @@
 </div>
 
 <script type="module">
+    // 1. Gerekli Firebase Modülleri
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getDatabase, ref, push, onChildAdded, onValue, set, update, remove, get, onChildChanged, onDisconnect, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    const firebaseConfig = { databaseURL: "https://sohbet-1e450-default-rtdb.europe-west1.firebasedatabase.app" };
+    // 2. Firebase Yapılandırması (Lütfen apiKey kısmını kendi Firebase panelinden doldur)
+    const firebaseConfig = { 
+        apiKey: "AIzaSy...", // Kendi API Key'ini buraya yapıştır
+        authDomain: "sohbet-1e450.firebaseapp.com",
+        databaseURL: "https://sohbet-1e450-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "sohbet-1e450",
+        storageBucket: "sohbet-1e450.appspot.com",
+        messagingSenderId: "...",
+        appId: "..."
+    };
+
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
     let myName, myRoom, currentPath, activeMsgId, mediaRecorder, audioChunks = [];
+
+    // --- OTURUM YÖNETİMİ VE GİRİŞ ---
+
+    // Google Butonuna Tıklama
+    document.getElementById("google-login-btn").onclick = () => {
+        signInWithPopup(auth, provider).catch(err => alert("Giriş Hatası: " + err.message));
+    };
+
+    // Oturum Durumunu Dinle
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // Giriş Başarılı
+            myName = user.displayName;
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("app-container").style.display = "flex";
+            
+            // Varsayılan olarak Genel odaya al (veya son kaldığı oda)
+            myRoom = "genel";
+            loadChat(`rooms/${myRoom}/msgs`, `#GenelSohbet`);
+            
+            // Kullanıcıyı odaya kaydet (Online listesi)
+            const pRef = ref(db, `rooms/${myRoom}/users/${myName}`);
+            set(pRef, true);
+            onDisconnect(pRef).remove();
+        } else {
+            // Giriş Yapılmamış
+            document.getElementById("login-screen").style.display = "flex";
+            document.getElementById("app-container").style.display = "none";
+        }
+    });
+
+    // --- SOHBET FONKSİYONLARI ---
 
     window.toggleInfo = () => document.getElementById("group-info-panel").classList.toggle("active");
     window.addEmoji = (e) => document.getElementById("msg-input").value += e;
 
-    window.join = async () => {
-        myName = document.getElementById("username").value.trim();
-        myRoom = document.getElementById("room-id").value.trim().toLowerCase();
-        const myPass = document.getElementById("room-pass").value.trim();
-        if(!myName || !myRoom || !myPass) return alert("Lütfen tüm alanları doldurun!");
+    function loadChat(path, title) {
+        currentPath = path;
+        document.getElementById("messages").innerHTML = "";
+        document.getElementById("room-display").innerText = title;
 
-        const rRef = ref(db, `rooms/${myRoom}/config`);
-        const snap = await get(rRef);
-        if(snap.exists() && snap.val().pass !== myPass) return alert("Oda şifresi hatalı!");
-        if(!snap.exists()) await set(rRef, { pass: myPass });
+        onChildAdded(ref(db, currentPath), (s) => {
+            const data = s.val();
+            renderMessage(s.key, data);
 
-        document.getElementById("login-screen").style.display = "none";
-        document.getElementById("chat-screen").style.display = "flex";
-        loadChat(`rooms/${myRoom}/msgs`, `#${myRoom}`);
+            // Bildirim Sesi
+            if (data.u !== myName) {
+                const sound = document.getElementById("notification-sound");
+                if (sound) sound.play().catch(e => console.log("Ses engellendi"));
+            }
+        });
 
-        const pRef = ref(db, `rooms/${myRoom}/users/${myName}`);
-        set(pRef, true); onDisconnect(pRef).remove();
+        onChildChanged(ref(db, currentPath), (s) => updateUIMessage(s.key, s.val()));
+        onChildRemoved(ref(db, currentPath), (s) => document.getElementById("msg-wrapper-"+s.key)?.remove());
+        
+        // Kullanıcı Listesini Güncelle
         onValue(ref(db, `rooms/${myRoom}/users`), (s) => {
             const users = s.val() || {};
             document.getElementById("user-list").innerHTML = Object.keys(users).map(u => `
@@ -175,32 +233,18 @@
                 </div>
             `).join('');
         });
-    };
-
-    function loadChat(path, title) {
-        currentPath = path;
-        document.getElementById("messages").innerHTML = "";
-        document.getElementById("room-display").innerText = title;
-        onChildAdded(ref(db, currentPath), (s) => {
-            const data = s.val();
-            renderMessage(s.key, data);
-
-            // Eğer mesajı gönderen başkasıysa ve mesaj yeniyse ses çal
-            if (data.u !== myName) {
-                const sound = document.getElementById("notification-sound");
-                if (sound) {
-                    sound.play().catch(e => console.log("Ses çalma engellendi: ", e));
-                }
-            }
-        });
-        onChildChanged(ref(db, currentPath), (s) => updateUIMessage(s.key, s.val()));
-        onChildRemoved(ref(db, currentPath), (s) => document.getElementById("msg-wrapper-"+s.key)?.remove());;
     }
 
     window.send = (v = null) => {
         const input = document.getElementById("msg-input");
         if(input.value || v) {
-            push(ref(db, currentPath), { u: myName, m: v ? "[Sesli Not]" : input.value, v: v, t: Date.now(), read: false });
+            push(ref(db, currentPath), { 
+                u: myName, 
+                m: v ? "[Sesli Not]" : input.value, 
+                v: v, 
+                t: Date.now(), 
+                read: false 
+            });
             input.value = "";
         }
     };
@@ -285,23 +329,43 @@
     window.toggleVoice = async () => {
         const btn = document.getElementById("voice-btn");
         if (!mediaRecorder || mediaRecorder.state === "inactive") {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                const reader = new FileReader(); reader.readAsDataURL(blob);
-                reader.onloadend = () => send(reader.result); audioChunks = [];
-            };
-            mediaRecorder.start(); btn.classList.add("recording");
-        } else { mediaRecorder.stop(); btn.classList.remove("recording"); }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const reader = new FileReader(); 
+                    reader.readAsDataURL(blob);
+                    reader.onloadend = () => send(reader.result);
+                };
+                mediaRecorder.start(); 
+                btn.classList.add("recording");
+            } catch(e) { alert("Mikrofon izni gerekli!"); }
+        } else { 
+            mediaRecorder.stop(); 
+            btn.classList.remove("recording"); 
+        }
     };
 
-    window.startPrivate = (u) => { if(u !== myName) { loadChat(`privates/${[myName, u].sort().join("_")}`, `@${u}`); document.getElementById("back-btn").style.display="block"; toggleInfo(); } };
-    window.exitPrivate = () => { loadChat(`rooms/${myRoom}/msgs`, `#${myRoom}`); document.getElementById("back-btn").style.display="none"; };
+    window.startPrivate = (u) => { 
+        if(u !== myName) { 
+            loadChat(`privates/${[myName, u].sort().join("_")}`, `@${u}`); 
+            document.getElementById("back-btn").style.display="block"; 
+            if(window.innerWidth < 768) toggleInfo(); 
+        } 
+    };
+
+    window.exitPrivate = () => { 
+        loadChat(`rooms/${myRoom}/msgs`, `#${myRoom}`); 
+        document.getElementById("back-btn").style.display="none"; 
+    };
 </script>
+    </div>
 </body>
 
 </html>
+
 
 
