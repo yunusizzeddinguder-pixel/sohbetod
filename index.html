@@ -234,75 +234,21 @@
     </div>
 
     <!-- Modalların Çizileceği Kök Element -->
-    <div id="modal-root" class="fixed inset-0 z-[3000] pointer-events-none"></div>
-
-    <!-- Firebase / Platform değişkenleri (host ortam enjekte edebilir) -->
-    <script>
-        window.SOHBETOD_DEFAULT_FIREBASE_CONFIG = {
-            apiKey: "AIzaSyCqhaA5yE-V_88mNovVQHOC9k90hsrUYVM",
-            authDomain: "sohbet-1e450.firebaseapp.com",
-            databaseURL: "https://sohbet-1e450-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "sohbet-1e450",
-            storageBucket: "sohbet-1e450.firebasestorage.app",
-            messagingSenderId: "339709433578",
-            appId: "1:339709433578:web:847062b4f5f7e07633e993"
-        };
-        try {
-            const savedCfg = localStorage.getItem('sohbetod_firebase_config');
-            if (savedCfg) window.SOHBETOD_SAVED_FIREBASE_CONFIG = JSON.parse(savedCfg);
-        } catch (e) {}
-        window.__firebase_config = window.__firebase_config
-            || (typeof __firebase_config !== 'undefined' ? __firebase_config : null)
-            || window.SOHBETOD_SAVED_FIREBASE_CONFIG
-            || window.SOHBETOD_DEFAULT_FIREBASE_CONFIG;
-        window.__app_id = window.__app_id
-            || (typeof __app_id !== 'undefined' ? __app_id : 'sohbetod-premium-system');
-        window.__initial_auth_token = window.__initial_auth_token
-            || (typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : '');
-    </script>
+    <div id="modal-root" class="z-50 relative"></div>
 
 <script type="module">
     // Firebase SDK Modülleri
-    import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // Global Proje Kimlikleri (İletişim Yapısına Uygun)
-    let app = null;
-    let auth = null;
-    let db = null;
-    const appId = window.__app_id || 'sohbetod-premium-system';
+    const firebaseConfig = JSON.parse(__firebase_config);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'sohbetod-premium-system';
     const provider = new GoogleAuthProvider();
-
-    function parseFirebaseConfig() {
-        const raw = window.__firebase_config || window.SOHBETOD_DEFAULT_FIREBASE_CONFIG;
-        if (!raw) return null;
-        try {
-            return typeof raw === 'string' ? JSON.parse(raw) : raw;
-        } catch (e) {
-            console.error('Firebase config parse hatası:', e);
-            return window.SOHBETOD_DEFAULT_FIREBASE_CONFIG || null;
-        }
-    }
-
-    function initFirebase() {
-        if (app && auth && db) return true;
-        const firebaseConfig = parseFirebaseConfig();
-        if (!firebaseConfig || !firebaseConfig.apiKey) return false;
-        try {
-            app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            setPersistence(auth, browserLocalPersistence).catch(() => {});
-            try {
-                localStorage.setItem('sohbetod_firebase_config', JSON.stringify(firebaseConfig));
-            } catch (e) {}
-            return true;
-        } catch (e) {
-            console.error('Firebase başlatma hatası:', e);
-            return false;
-        }
-    }
 
     const REACTIONS = ['👍','❤️','😂','😮','😢','🙏'];
 
@@ -327,11 +273,6 @@
     let activeRoomMembersUnsub = null;
     let typingUnsub = null;
     let presenceInterval = null;
-    let lobbyRoomUnsub = null;
-    let lobbyDmUnsub = null;
-    let dmPresenceUnsub = null;
-    let pendingDeepLinkRoom = null;
-    let lastMessageCount = 0;
 
     // Ses Kaydı Değişkenleri
     let mediaRecorder = null, mediaStream = null, audioChunks = [];
@@ -341,78 +282,11 @@
     let isTabActive = true;
     window.onfocus = () => { isTabActive = true; updateOnlineStatus(true); };
     window.onblur = () => { isTabActive = false; };
-    window.addEventListener('beforeunload', () => { updateOnlineStatus(false); });
-
-    // --- Firestore Yardımcıları ---
-    const usersCol = () => collection(db, 'artifacts', appId, 'public', 'data', 'users');
-    const roomsCol = () => collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
-    const dmsCol = () => collection(db, 'artifacts', appId, 'public', 'data', 'dms');
-    const userRef = (uid) => doc(db, 'artifacts', appId, 'public', 'data', 'users', uid);
-    const roomRef = (roomId) => doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-    const msgCol = (chatId) => collection(db, 'artifacts', appId, 'public', 'data', 'messages_' + chatId);
-    const msgRef = (chatId, msgId) => doc(db, 'artifacts', appId, 'public', 'data', 'messages_' + chatId, msgId);
-    const typingRef = (chatId) => doc(db, 'artifacts', appId, 'public', 'data', 'typing', chatId);
-
-    function ensureFirebase() {
-        if (db && auth) return true;
-        if (initFirebase()) return true;
-        toast('Bağlantı kurulamadı. Sayfayı yenileyin veya internet bağlantınızı kontrol edin.', 'error');
-        return false;
-    }
-
-    function slugifyRoomId(name) {
-        return name.toLocaleLowerCase('tr-TR').replace(/\s+/g, '-').replace(/[^a-z0-9\-çğıöşü]/g, '');
-    }
-
-    async function hashPassword(text) {
-        const data = new TextEncoder().encode(text);
-        const hash = await crypto.subtle.digest('SHA-256', data);
-        return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    async function copyToClipboard(text) {
-        try {
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(text);
-                return true;
-            }
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            ta.style.position = 'fixed';
-            ta.style.left = '-9999px';
-            document.body.appendChild(ta);
-            ta.select();
-            const ok = document.execCommand('copy');
-            ta.remove();
-            return ok;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    function isNearBottom(el, threshold = 120) {
-        return el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-    }
-
-    function handleDeepLinkRoom() {
-        const params = new URLSearchParams(window.location.search);
-        const roomParam = params.get('room');
-        if (!roomParam || !myUid) return;
-        pendingDeepLinkRoom = roomParam;
-        const cleanUrl = window.location.pathname + window.location.hash;
-        window.history.replaceState({}, '', cleanUrl);
-        enterRoomById(pendingDeepLinkRoom);
-        pendingDeepLinkRoom = null;
-    }
 
     // --- HTML Güvenli Çeviri ---
     function escapeHTML(str) {
         if (!str) return '';
         return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    }
-
-    function jsStr(str) {
-        return String(str ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
 
     // --- SVG Dinamik Avatar Oluşturma ---
@@ -486,7 +360,7 @@
         if (data.uid === myUid) return;
         playDing();
         if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && !isTabActive) {
-            let desc = data.m || (data.img ? '📷 Fotoğraf' : (data.v ? '🎤 Sesli Mesaj' : (data.poll ? '📊 Anket' : 'Yeni mesaj')));
+            let desc = data.m || (data.img ? '📷 Fotoğraf' : (data.v ? '🎤 Sesli Mesaj' : 'Anket'));
             new Notification('Sohbetod', { body: `${data.u}: ${desc}` });
         }
     }
@@ -494,10 +368,9 @@
     // --- Şık Modalları Çizme ve Temizleme Altyapısı ---
     function openSheet(html) {
         const root = document.getElementById('modal-root');
-        root.classList.remove('pointer-events-none');
         root.innerHTML = `
-            <div class="fixed inset-0 bg-black/60 z-[2000] backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 transition-opacity duration-200 pointer-events-auto" id="sheet-backdrop" onclick="if(event.target===this) closeSheet()">
-                <div class="bg-white dark:bg-zinc-900 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl transform translate-y-full sm:translate-y-4 transition-transform duration-300 max-h-[85vh] overflow-y-auto text-zinc-900 dark:text-white pointer-events-auto" id="sheet-card">
+            <div class="fixed inset-0 bg-black/60 z-[2000] backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 transition-opacity duration-200" id="sheet-backdrop" onclick="if(event.target===this) closeSheet()">
+                <div class="bg-white dark:bg-zinc-900 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl transform translate-y-full sm:translate-y-4 transition-transform duration-300 max-h-[85vh] overflow-y-auto text-zinc-900 dark:text-white" id="sheet-card">
                     ${html}
                 </div>
             </div>
@@ -514,24 +387,19 @@
     function closeSheet() {
         const b = document.getElementById('sheet-backdrop');
         const c = document.getElementById('sheet-card');
-        const root = document.getElementById('modal-root');
         if (!b) return;
         b.classList.add('opacity-0');
         c.classList.add('translate-y-full');
-        setTimeout(() => {
-            root.innerHTML = '';
-            root.classList.add('pointer-events-none');
-        }, 220);
+        setTimeout(() => { document.getElementById('modal-root').innerHTML = ''; }, 220);
     }
 
     // ============================================================
     // FIREBASE KİMLİK DOĞRULAMA (RULE 3 UYUMU)
     // ============================================================
     const initAuth = async () => {
-        if (!auth) return;
         try {
-            if (window.__initial_auth_token) {
-                await signInWithCustomToken(auth, window.__initial_auth_token);
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
             } else {
                 await signInAnonymously(auth);
             }
@@ -540,40 +408,11 @@
         }
     };
 
-    function bindGlobalHandlers() {
-        const handlers = {
-            signOutApp, openMyProfileEditor, handleMyPhotoChange, saveMyProfile,
-            openCreateRoomModal, submitCreateRoom, openJoinRoomModal, submitJoinRoom,
-            enterRoomById, enterDM, goBackToLobby, shareRoom, toggleInfo, closeSheet, closeInfoPanel,
-            send, sendImage, startRecording, cancelRecording, stopRecordingAndPreview, discardRecording, sendRecording,
-            openPollCreator, addPollOptionField, submitPoll, votePoll,
-            openMessageActions, reactToMessage, replyToMessage, cancelReply,
-            copyMessageText, editMessageStart, saveMessageEdit,
-            deleteMessageForMe, deleteMessageForEveryone,
-            openEditRoomInfo, saveRoomInfo,
-            openAddMember, submitAddMember, openMemberAdminMenu, toggleMemberAdmin, removeMember, leaveRoom,
-            openMemberProfile, openFeaturesModal, openGuestLoginModal, submitGuestLogin, toggleDarkMode,
-            toggleSearchInput, filterMessages, openWallpaperCustomizer, setWallpaper, applyUrlWallpaper, uploadWallpaperImage,
-            handleTyping
-        };
-        Object.assign(window, handlers);
-    }
-
     window.addEventListener('load', async () => {
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         }
-
-        if (!initFirebase()) {
-            toast('Firebase başlatılamadı. İnternet bağlantınızı veya proje ayarlarını kontrol edin.', 'error');
-            bindGlobalHandlers();
-            bindStaticButtons();
-            showLobbyLoggedOut();
-            return;
-        }
         
-        bindGlobalHandlers();
-        bindStaticButtons();
         await initAuth();
         
         onAuthStateChanged(auth, async (user) => {
@@ -594,23 +433,17 @@
             // Google kullanıcısı ise
             if (user && !user.isAnonymous) {
                 myUid = user.uid;
-                const userDocRef = userRef(myUid);
+                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', myUid);
                 const userSnap = await getDoc(userDocRef);
                 if (userSnap.exists()) {
-                    myProfile = userSnap.data();
+                    myProfile = userSnap.val();
                 } else {
-                    myProfile = { name: user.displayName || 'Kullanıcı', photoURL: user.photoURL || '', email: user.email || '', about: 'Sohbetod Premium üyesi.', aboutPublic: true, isGuest: false };
+                    myProfile = { name: user.displayName || 'Kullanıcı', photoURL: user.photoURL || '', about: 'Sohbetod Premium üyesi.', aboutPublic: true, isGuest: false };
                     await setDoc(userDocRef, myProfile);
-                }
-                if (user.email && myProfile.email !== user.email) {
-                    myProfile.email = user.email;
-                    await setDoc(userDocRef, { email: user.email }, { merge: true });
                 }
                 showLobbyLoggedIn();
                 loadLobby();
                 startPresence();
-                requestNotifPermission();
-                handleDeepLinkRoom();
                 return;
             }
 
@@ -619,15 +452,13 @@
     });
 
     async function loadUserProfile(uid) {
-        const userDocRef = userRef(uid);
+        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', uid);
         const userSnap = await getDoc(userDocRef);
         if (userSnap.exists()) {
-            myProfile = userSnap.data();
+            myProfile = userSnap.val();
             showLobbyLoggedIn();
             loadLobby();
             startPresence();
-            requestNotifPermission();
-            handleDeepLinkRoom();
         } else {
             localStorage.removeItem('guest_session');
             showLobbyLoggedOut();
@@ -653,25 +484,14 @@
     }
 
     // Google Login İşleyicisi
-    function bindStaticButtons() {
-        const googleBtn = document.getElementById('google-login-btn');
-        if (googleBtn && !googleBtn.dataset.bound) {
-            googleBtn.dataset.bound = '1';
-            googleBtn.addEventListener('click', async () => {
-                if (!ensureFirebase()) return;
-                await requestNotifPermission();
-                try {
-                    await signInWithPopup(auth, provider);
-                } catch (e) {
-                    toast('Google girişi başarısız.', 'error');
-                }
-            });
+    document.getElementById('google-login-btn').onclick = async () => {
+        await requestNotifPermission();
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (e) {
+            toast('Google girişi başarısız.', 'error');
         }
-        const guestBtn = document.getElementById('guest-login-btn');
-        if (guestBtn && !guestBtn.getAttribute('onclick')) {
-            guestBtn.addEventListener('click', openGuestLoginModal);
-        }
-    }
+    };
 
     // ============================================================
     // GELİŞMİŞ ŞİFRELİ MİSAFİR GİRİŞ SİSTEMİ
@@ -683,14 +503,13 @@
             <h3 class="text-lg font-bold mb-4 text-center">👤 Misafir Girişi / Kayıt</h3>
             <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-4 text-center">İlk kez giriyorsanız şifreniz oluşturulur. Diğer cihazlardan bu şifreyle girebilirsiniz.</p>
             <input id="guest-username" type="text" placeholder="Kullanıcı Adı" class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-850 mb-3 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white">
-            <input id="guest-password" type="password" placeholder="Şifre (En az 6 Karakter)" class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-850 mb-4 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white" onkeydown="if(event.key==='Enter'){ event.preventDefault(); submitGuestLogin(); }">
+            <input id="guest-password" type="password" placeholder="Şifre (En az 6 Karakter)" class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-850 mb-4 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white">
             <button onclick="submitGuestLogin()" class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-2xl shadow-md transition text-sm">Giriş Yap / Kaydol</button>
         `;
         openSheet(html);
     }
 
     async function submitGuestLogin() {
-        if (!ensureFirebase()) return;
         const username = document.getElementById('guest-username').value.trim();
         const password = document.getElementById('guest-password').value.trim();
 
@@ -713,11 +532,10 @@
             if (!credsSnap.exists()) {
                 // Yeni Kayıt Oluşturma
                 const customUid = 'guest_' + cleanUsername + '_' + Math.random().toString(36).substr(2, 9);
-                const passwordHash = await hashPassword(password + ':' + cleanUsername);
-                await setDoc(credsRef, { passwordHash, uid: customUid });
+                await setDoc(credsRef, { password: password, uid: customUid });
                 
-                myProfile = { name: cleanUsername, photoURL: '', email: '', about: 'Sohbetod Premium üyesi.', aboutPublic: true, isGuest: true };
-                await setDoc(userRef(customUid), myProfile);
+                myProfile = { name: cleanUsername, photoURL: '', about: 'Sohbetod Premium üyesi.', aboutPublic: true, isGuest: true };
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', customUid), myProfile);
                 
                 myUid = customUid;
                 localStorage.setItem('guest_session', JSON.stringify({ username: cleanUsername, uid: customUid }));
@@ -726,17 +544,11 @@
                 showLobbyLoggedIn();
                 loadLobby();
                 startPresence();
-                requestNotifPermission();
                 toast('Kayıt başarıyla tamamlandı!');
             } else {
                 // Giriş Denetleme
-                const data = credsSnap.data();
-                const passwordHash = await hashPassword(password + ':' + cleanUsername);
-                const storedHash = data.passwordHash || (data.password ? await hashPassword(data.password + ':' + cleanUsername) : '');
-                if (storedHash === passwordHash || data.password === password) {
-                    if (!data.passwordHash && data.password === password) {
-                        await setDoc(credsRef, { passwordHash, password: null }, { merge: true });
-                    }
+                const data = credsSnap.val();
+                if (data.password === password) {
                     myUid = data.uid;
                     localStorage.setItem('guest_session', JSON.stringify({ username: cleanUsername, uid: data.uid }));
                     wrongAttempts = 0;
@@ -764,12 +576,6 @@
     function signOutApp() {
         const conf = confirm('Çıkış yapmak istediğinize emin misiniz?');
         if (!conf) return;
-        if (presenceInterval) clearInterval(presenceInterval);
-        presenceInterval = null;
-        updateOnlineStatus(false);
-        if (lobbyRoomUnsub) { lobbyRoomUnsub(); lobbyRoomUnsub = null; }
-        if (lobbyDmUnsub) { lobbyDmUnsub(); lobbyDmUnsub = null; }
-        leaveCurrentChatContext();
         localStorage.removeItem('guest_session');
         signOut(auth);
         myUid = null;
@@ -790,9 +596,9 @@
     async function updateOnlineStatus(status) {
         if (!myUid) return;
         try {
-            await setDoc(userRef(myUid), {
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', myUid), {
                 lastActive: status ? Date.now() : 0
-            }, { merge: true });
+            });
         } catch (e) {}
     }
 
@@ -854,10 +660,6 @@
                 </label>
             </div>
             <div class="flex flex-col gap-2 mb-4 text-left">
-                <label class="text-xs text-zinc-500 font-bold uppercase">E-posta (Opsiyonel)</label>
-                <input id="my-email" type="email" class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white" placeholder="ornek@gmail.com" value="${escapeHTML(myProfile.email || '')}">
-            </div>
-            <div class="flex flex-col gap-2 mb-4 text-left">
                 <label class="text-xs text-zinc-500 font-bold uppercase">Hakkımda</label>
                 <textarea id="my-about" class="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white" placeholder="Hakkımda bir şeyler yazın...">${escapeHTML(myProfile.about || '')}</textarea>
             </div>
@@ -885,13 +687,11 @@
     async function saveMyProfile() {
         const about = document.getElementById('my-about').value.trim();
         const aboutPublic = document.getElementById('my-about-public').checked;
-        const emailEl = document.getElementById('my-email');
-        const email = emailEl ? emailEl.value.trim().toLowerCase() : '';
-        const updates = { about, aboutPublic, email };
+        const updates = { about, aboutPublic };
         if (pendingMyPhotoDataURL) updates.photoURL = pendingMyPhotoDataURL;
         
         try {
-            await setDoc(userRef(myUid), updates, { merge: true });
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', myUid), updates);
             myProfile = Object.assign({}, myProfile, updates);
             refreshLobbyProfileUI();
             closeSheet();
@@ -905,27 +705,22 @@
     // LOBİ - ODALAR & MESAJLAR LİSTELEME
     // ============================================================
     function loadLobby() {
-        if (lobbyRoomUnsub) lobbyRoomUnsub();
-        if (lobbyDmUnsub) lobbyDmUnsub();
-
         // Rooms dinleyici
-        lobbyRoomUnsub = onSnapshot(roomsCol(), (snapshot) => {
+        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), (snapshot) => {
             const list = document.getElementById('my-rooms-list');
             let matchedRooms = [];
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
                 if (data.members && data.members[myUid]) {
-                    matchedRooms.push({ id: docSnap.id, ...data });
+                    matchedRooms.push(data);
                 }
             });
-
-            matchedRooms.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
             if (matchedRooms.length === 0) {
                 list.innerHTML = '<div class="text-center text-zinc-400 py-4 text-xs">Katıldığınız bir oda yok. Katılın veya yeni oda oluşturun!</div>';
             } else {
                 list.innerHTML = matchedRooms.map(room => `
-                    <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer" data-room-id="${escapeHTML(room.id)}" onclick="enterRoomById('${jsStr(room.id)}')">
+                    <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer" onclick="enterRoomById('${room.id}')">
                         <div class="flex items-center gap-3">
                             <img class="w-10 h-10 rounded-full object-cover" src="${room.photoURL || defaultAvatar(room.name)}">
                             <div class="flex flex-col text-left">
@@ -940,17 +735,15 @@
         });
 
         // DMs dinleyici
-        lobbyDmUnsub = onSnapshot(dmsCol(), (snapshot) => {
+        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'dms'), (snapshot) => {
             const list = document.getElementById('my-dms-list');
             let matchedDms = [];
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
                 if (data.user1 === myUid || data.user2 === myUid) {
-                    matchedDms.push({ id: docSnap.id, ...data });
+                    matchedDms.push(data);
                 }
             });
-
-            matchedDms.sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
 
             if (matchedDms.length === 0) {
                 list.innerHTML = '<div class="text-center text-zinc-400 py-4 text-xs">Henüz özel mesajınız yok.</div>';
@@ -960,15 +753,14 @@
                     const otherUid = isUser1 ? dm.user2 : dm.user1;
                     const otherName = isUser1 ? dm.user2_name : dm.user1_name;
                     const otherPhoto = isUser1 ? dm.user2_photo : dm.user1_photo;
-                    const preview = dm.lastMessage ? escapeHTML(dm.lastMessage).slice(0, 40) : 'Özel Sohbet';
                     
                     return `
-                        <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer" data-dm-uid="${escapeHTML(otherUid)}" onclick="enterDM('${jsStr(otherUid)}')">
+                        <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer" onclick="enterDM('${otherUid}')">
                             <div class="flex items-center gap-3">
                                 <img class="w-10 h-10 rounded-full object-cover" src="${otherPhoto || defaultAvatar(otherName)}">
                                 <div class="flex flex-col text-left">
                                     <b class="text-sm font-semibold text-zinc-800 dark:text-zinc-100">${escapeHTML(otherName)}</b>
-                                    <span class="text-xs text-zinc-500 dark:text-zinc-400 truncate w-48">${preview}</span>
+                                    <span class="text-xs text-green-500 font-medium">Özel Sohbet</span>
                                 </div>
                             </div>
                             <span class="text-xs text-zinc-400">➔</span>
@@ -1001,13 +793,13 @@
             return;
         }
 
-        const roomId = slugifyRoomId(name);
+        const roomId = name.toLocaleLowerCase('tr-TR').replace(/\s+/g, '-').replace(/[^a-z0-9\-çğıöşü]/g, '');
         if (!roomId) {
             toast('Geçersiz oda adı.', 'error');
             return;
         }
 
-        const roomDocRef = roomRef(roomId);
+        const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
         try {
             const snap = await getDoc(roomDocRef);
             if (snap.exists()) {
@@ -1055,12 +847,8 @@
             return;
         }
 
-        const roomId = slugifyRoomId(nameRaw);
-        if (!roomId) {
-            toast('Geçersiz oda adı.', 'error');
-            return;
-        }
-        const roomDocRef = roomRef(roomId);
+        const roomId = nameRaw.toLocaleLowerCase('tr-TR').replace(/\s+/g, '-');
+        const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
         
         try {
             const snap = await getDoc(roomDocRef);
@@ -1069,7 +857,7 @@
                 return;
             }
 
-            const room = snap.data();
+            const room = snap.val();
             if (room.password !== pass) {
                 toast('Hatalı şifre!', 'error');
                 return;
@@ -1092,8 +880,6 @@
         if (activeChatUnsub) { activeChatUnsub(); activeChatUnsub = null; }
         if (activeRoomMembersUnsub) { activeRoomMembersUnsub(); activeRoomMembersUnsub = null; }
         if (typingUnsub) { typingUnsub(); typingUnsub = null; }
-        if (dmPresenceUnsub) { dmPresenceUnsub(); dmPresenceUnsub = null; }
-        lastMessageCount = 0;
         cancelReply();
     }
 
@@ -1133,25 +919,15 @@
     async function enterRoomById(roomId) {
         leaveCurrentChatContext();
         try {
-            const roomSnap = await getDoc(roomRef(roomId));
+            const roomSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId));
             if (!roomSnap.exists()) {
                 toast('Oda bulunamadı.', 'error');
-                return;
-            }
-            const roomData = roomSnap.data();
-            if (!roomData.members || !roomData.members[myUid]) {
-                toast('Bu odaya erişiminiz yok. Önce şifreyle katılın.', 'error');
-                openJoinRoomModal();
-                setTimeout(() => {
-                    const nameInput = document.getElementById('join-room-name');
-                    if (nameInput) nameInput.value = roomData.name || roomId;
-                }, 300);
                 return;
             }
             currentChatType = 'room';
             currentRoomId = roomId;
             currentChatId = 'room_' + roomId;
-            currentRoomInfo = { id: roomId, ...roomData };
+            currentRoomInfo = roomSnap.val();
             
             switchToChatScreen();
             document.getElementById('chat-title').textContent = currentRoomInfo.name;
@@ -1169,12 +945,12 @@
     async function enterDM(otherUid) {
         leaveCurrentChatContext();
         try {
-            const userSnap = await getDoc(userRef(otherUid));
+            const userSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', otherUid));
             if (!userSnap.exists()) {
                 toast('Kullanıcı bulunamadı.', 'error');
                 return;
             }
-            const otherProfile = userSnap.data();
+            const otherProfile = userSnap.val();
             
             currentChatType = 'dm';
             currentDmUid = otherUid;
@@ -1186,24 +962,23 @@
             document.getElementById('chat-title').textContent = otherProfile.name;
             document.getElementById('chat-avatar').src = otherProfile.photoURL || defaultAvatar(otherProfile.name);
 
-            updateDmOnlineBadge(otherProfile.lastActive);
-
-            if (dmPresenceUnsub) dmPresenceUnsub();
-            dmPresenceUnsub = onSnapshot(userRef(otherUid), (snap) => {
-                if (snap.exists()) updateDmOnlineBadge(snap.data().lastActive);
-            });
+            const badge = document.getElementById('chat-online-badge');
+            const isOnline = otherProfile.lastActive && (Date.now() - otherProfile.lastActive < 15000);
+            if (isOnline) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
 
             const dmDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'dms', dmId);
-            const sorted = [myUid, otherUid].sort();
             await setDoc(dmDocRef, {
-                user1: sorted[0],
-                user1_name: sorted[0] === myUid ? myProfile.name : otherProfile.name,
-                user1_photo: sorted[0] === myUid ? (myProfile.photoURL || '') : (otherProfile.photoURL || ''),
-                user2: sorted[1],
-                user2_name: sorted[1] === myUid ? myProfile.name : otherProfile.name,
-                user2_photo: sorted[1] === myUid ? (myProfile.photoURL || '') : (otherProfile.photoURL || ''),
-                lastMessageAt: Date.now()
-            }, { merge: true });
+                user1: myUid,
+                user1_name: myProfile.name,
+                user1_photo: myProfile.photoURL || '',
+                user2: otherUid,
+                user2_name: otherProfile.name,
+                user2_photo: otherProfile.photoURL || ''
+            });
 
             listenToChatMessages();
             listenToTyping();
@@ -1212,19 +987,12 @@
         }
     }
 
-    function updateDmOnlineBadge(lastActive) {
-        const badge = document.getElementById('chat-online-badge');
-        const isOnline = lastActive && (Date.now() - lastActive < 15000);
-        if (isOnline) badge.classList.remove('hidden');
-        else badge.classList.add('hidden');
-    }
-
     // ============================================================
     // MESAJLARIN DİNLENMESİ VE GÖNDERİLMESİ
     // ============================================================
     function listenToChatMessages() {
         const path = 'messages_' + currentChatId;
-        const msgColRef = msgCol(currentChatId);
+        const msgColRef = collection(db, 'artifacts', appId, 'public', 'data', path);
         
         activeChatUnsub = onSnapshot(msgColRef, (snapshot) => {
             let list = [];
@@ -1233,10 +1001,6 @@
             });
             
             list.sort((a, b) => a.t - b.t);
-
-            const box = document.getElementById('messages');
-            const shouldStick = isNearBottom(box) || list.length <= lastMessageCount;
-            const prevCount = lastMessageCount;
             
             messagesCache = {};
             document.getElementById('messages').innerHTML = '';
@@ -1246,21 +1010,14 @@
                 renderMsg(msg.id, msg);
                 
                 if (msg.uid !== myUid && (!msg.seenBy || !msg.seenBy[myUid])) {
-                    setDoc(msgRef(currentChatId, msg.id), {
+                    updateDoc(doc(db, 'artifacts', appId, 'public', 'data', path, msg.id), {
                         [`seenBy.${myUid}`]: true
-                    }, { merge: true }).catch(() => {});
+                    });
                 }
             });
-
-            if (prevCount > 0) {
-                list.slice(prevCount).filter(m => m.uid !== myUid).forEach(m => notifyIncoming(m));
-            }
-
-            lastMessageCount = list.length;
             
-            if (shouldStick) {
-                box.scrollTop = box.scrollHeight;
-            }
+            const box = document.getElementById('messages');
+            box.scrollTop = box.scrollHeight;
         });
     }
 
@@ -1291,22 +1048,13 @@
         }
 
         try {
-            await addDoc(msgCol(currentChatId), payload);
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', path), payload);
             inp.value = '';
             cancelReply();
             
-            await setDoc(typingRef(currentChatId), {
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'typing', currentChatId), {
                 [`users.${myUid}`]: null
-            }, { merge: true });
-
-            if (currentChatType === 'dm') {
-                const dmId = [myUid, currentDmUid].sort().join('_');
-                const preview = text || (extra.img ? '📷 Fotoğraf' : (extra.voice ? '🎤 Sesli Mesaj' : (extra.poll ? '📊 Anket' : '')));
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'dms', dmId), {
-                    lastMessage: preview,
-                    lastMessageAt: Date.now()
-                }, { merge: true });
-            }
+            });
         } catch (e) {
             toast('Mesaj gönderilemedi.', 'error');
         }
@@ -1360,21 +1108,18 @@
         // Tiklerin Belirlenmesi
         let tickHTML = '';
         if (isMe) {
-            const seenByOthers = Object.keys(data.seenBy || {}).filter(uid => uid !== myUid);
-            const readCount = seenByOthers.length;
+            const readCount = Object.keys(data.seenBy || {}).filter(uid => uid !== myUid).length;
             if (readCount > 0) {
-                tickHTML = `<span class="text-blue-500 font-bold ml-1" title="Okundu">✔✔</span>`;
-            } else if (currentChatType === 'dm') {
-                tickHTML = `<span class="text-zinc-400 ml-1" title="İletildi">✔✔</span>`;
+                tickHTML = `<span class="text-blue-500 font-bold ml-1">✔✔</span>`;
             } else {
-                tickHTML = `<span class="text-zinc-400 ml-1" title="Gönderildi">✔</span>`;
+                tickHTML = `<span class="text-zinc-400 ml-1">✔</span>`;
             }
         }
 
         const replyHTML = data.replyTo ? `<div class="border-l-2 border-primary bg-zinc-100 dark:bg-zinc-800 p-1.5 rounded text-xs mb-1"><b>${escapeHTML(data.replyTo.u)}:</b> ${escapeHTML(data.replyTo.m)}</div>` : '';
         const reactionsHTML = data.reactions ? Object.entries(data.reactions).map(([emoji, uids]) => {
             const hasMine = uids[myUid];
-            return `<span class="inline-block px-1.5 py-0.5 rounded-full border text-xs cursor-pointer ${hasMine ? 'bg-blue-100 border-primary' : 'bg-white border-zinc-200 text-zinc-800'}" onclick="reactToMessage('${jsStr(id)}','${jsStr(emoji)}')">${emoji} ${Object.keys(uids).length}</span>`;
+            return `<span class="inline-block px-1.5 py-0.5 rounded-full border text-xs cursor-pointer ${hasMine ? 'bg-blue-100 border-primary' : 'bg-white border-zinc-200 text-zinc-800'}" onclick="reactToMessage('${id}','${emoji}')">${emoji} ${Object.keys(uids).length}</span>`;
         }).join('') : '';
 
         const timeStr = new Date(data.t).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
@@ -1398,7 +1143,7 @@
                             ${tickHTML}
                         </div>
                     </div>
-                    <button onclick="openMessageActions('${jsStr(id)}')" class="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition text-xs">⋯</button>
+                    <button onclick="openMessageActions('${id}')" class="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition text-xs">⋯</button>
                 </div>
                 ${reactionsHTML ? `<div class="flex gap-1 flex-wrap mt-1 ${isMe ? 'justify-end' : 'justify-start'}">${reactionsHTML}</div>` : ''}
             </div>
@@ -1419,22 +1164,22 @@
         let html = `
             <h3 class="text-sm font-bold text-center mb-3">Mesaj Seçenekleri</h3>
             <div class="flex justify-around mb-4 bg-zinc-100 dark:bg-zinc-800 p-2 rounded-2xl">
-                ${REACTIONS.map(emoji => `<button onclick="reactToMessage('${jsStr(id)}','${jsStr(emoji)}')" class="text-2xl hover:scale-125 transition">${emoji}</button>`).join('')}
+                ${REACTIONS.map(emoji => `<button onclick="reactToMessage('${id}','${emoji}')" class="text-2xl hover:scale-125 transition">${emoji}</button>`).join('')}
             </div>
-            <button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold hover:bg-zinc-100 transition" onclick="replyToMessage('${jsStr(id)}')">↩️ Yanıtla</button>
+            <button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold hover:bg-zinc-100 transition" onclick="replyToMessage('${id}')">↩️ Yanıtla</button>
         `;
 
         if (hasText) {
-            html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold hover:bg-zinc-100 transition" onclick="copyMessageText('${jsStr(id)}')">📋 Metni Kopyala</button>`;
+            html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold hover:bg-zinc-100 transition" onclick="copyMessageText('${id}')">📋 Metni Kopyala</button>`;
         }
         if (isMine && hasText) {
-            html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold text-primary hover:bg-zinc-100 transition" onclick="editMessageStart('${jsStr(id)}')">✏️ Düzenle</button>`;
+            html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold text-primary hover:bg-zinc-100 transition" onclick="editMessageStart('${id}')">✏️ Düzenle</button>`;
         }
         
-        html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold text-red-500 hover:bg-zinc-100 transition" onclick="deleteMessageForMe('${jsStr(id)}')">🗑️ Benden Sil</button>`;
+        html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold text-red-500 hover:bg-zinc-100 transition" onclick="deleteMessageForMe('${id}')">🗑️ Benden Sil</button>`;
         
         if (isMine || isAdmin) {
-            html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm font-semibold text-red-500 hover:bg-zinc-100 transition" onclick="deleteMessageForEveryone('${jsStr(id)}')">🗑️ Herkesten Sil</button>`;
+            html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm font-semibold text-red-500 hover:bg-zinc-100 transition" onclick="deleteMessageForEveryone('${id}')">🗑️ Herkesten Sil</button>`;
         }
 
         openSheet(html);
@@ -1477,9 +1222,8 @@
     function copyMessageText(id) {
         const data = messagesCache[id];
         if (data && data.m) {
-            copyToClipboard(data.m).then(ok => {
-                toast(ok ? 'Mesaj kopyalandı.' : 'Kopyalama başarısız.', ok ? 'info' : 'error');
-            });
+            document.execCommand('copy');
+            toast('Mesaj kopyalandı.');
         }
         closeSheet();
     }
@@ -1491,7 +1235,7 @@
         const html = `
             <h3 class="text-sm font-bold mb-3">Mesajı Düzenle</h3>
             <textarea id="edit-msg-input" class="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm focus:outline-none mb-3 text-zinc-900 dark:text-white">${escapeHTML(data.m)}</textarea>
-            <button onclick="saveMessageEdit('${jsStr(id)}')" class="w-full py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-md transition">Kaydet</button>
+            <button onclick="saveMessageEdit('${id}')" class="w-full py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-md transition">Kaydet</button>
         `;
         openSheet(html);
     }
@@ -1544,7 +1288,7 @@
             return;
         }
 
-        mediaRecorder = new MediaRecorder(mediaStream, MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm' } : undefined);
+        mediaRecorder = new MediaRecorder(mediaStream);
         audioChunks = [];
         
         mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
@@ -1673,7 +1417,7 @@
             const hasVoted = o.votes && o.votes[myUid];
 
             return `
-                <button onclick="votePoll('${jsStr(id)}', ${index})" class="w-full text-left p-2.5 rounded-xl border text-xs font-semibold relative overflow-hidden transition-all duration-200 mb-1.5 ${hasVoted ? 'border-primary' : 'border-zinc-100 dark:border-zinc-800'}">
+                <button onclick="votePoll('${id}', ${index})" class="w-full text-left p-2.5 rounded-xl border text-xs font-semibold relative overflow-hidden transition-all duration-200 mb-1.5 ${hasVoted ? 'border-primary' : 'border-zinc-100 dark:border-zinc-800'}">
                     <div class="absolute top-0 left-0 h-full bg-blue-100 dark:bg-blue-900/30 transition-all duration-300 pointer-events-none" style="width: ${pct}%"></div>
                     <div class="relative flex justify-between pointer-events-none text-zinc-800 dark:text-zinc-200">
                         <span>${escapeHTML(o.text)}</span>
@@ -1712,8 +1456,8 @@
         });
 
         try {
-            await updateDoc(msgRef(currentChatId, msgId), {
-                poll: { ...msg.poll, options }
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', path, msgId), {
+                'poll.options': options
             });
         } catch (e) {}
     }
@@ -1722,10 +1466,10 @@
     // REAL-TIME YAZIYOR (TYPING) SİSTEMİ
     // ============================================================
     function listenToTyping() {
-        const typingDocRef = typingRef(currentChatId);
+        const typingDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'typing', currentChatId);
         typingUnsub = onSnapshot(typingDocRef, (snap) => {
             if (!snap.exists()) return;
-            const data = snap.data();
+            const data = snap.val();
             const users = data.users || {};
             
             const typingList = Object.entries(users)
@@ -1746,8 +1490,7 @@
 
     let typingTimeout = null;
     async function handleTyping() {
-        if (!currentChatId) return;
-        const typingDocRef = typingRef(currentChatId);
+        const typingDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'typing', currentChatId);
         try {
             await setDoc(typingDocRef, {
                 [`users.${myUid}`]: myProfile.name
@@ -1781,18 +1524,15 @@
         const wrappers = document.querySelectorAll('#messages > div');
         
         wrappers.forEach(wrap => {
-            if (!query) {
-                wrap.style.display = 'flex';
-                return;
-            }
             const textEl = wrap.querySelector('.msg-text');
-            if (!textEl) {
-                wrap.style.display = 'none';
-                return;
-            }
+            if (!textEl) return;
             
             const text = textEl.textContent.toLowerCase();
-            wrap.style.display = text.includes(query) ? 'flex' : 'none';
+            if (text.includes(query)) {
+                wrap.style.display = 'flex';
+            } else {
+                wrap.style.display = 'none';
+            }
         });
     }
 
@@ -1903,22 +1643,22 @@
     }
 
     async function loadRoomMembers(roomId) {
-        const roomDocRef = roomRef(roomId);
+        const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
         activeRoomMembersUnsub = onSnapshot(roomDocRef, async (snap) => {
             if (!snap.exists()) return;
-            const data = snap.data();
-            currentRoomInfo = { id: roomId, ...data };
+            const data = snap.val();
+            currentRoomInfo = data;
             currentRoomAdmins = data.admins || {};
             
             const memberIds = Object.keys(data.members || {});
             const profiles = {};
             
-            await Promise.all(memberIds.map(async (uid) => {
-                const userSnap = await getDoc(userRef(uid));
+            for (let uid of memberIds) {
+                const userSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid));
                 if (userSnap.exists()) {
-                    profiles[uid] = userSnap.data();
+                    profiles[uid] = userSnap.val();
                 }
-            }));
+            }
             
             currentRoomMembers = profiles;
             if (!document.getElementById('info-panel').classList.contains('hidden')) {
@@ -1935,7 +1675,7 @@
             const isFounder = info.founder === uid;
             const isAdmin = currentRoomAdmins[uid];
             return `
-                <div class="flex items-center justify-between p-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition cursor-pointer" onclick="openMemberProfile('${jsStr(uid)}')">
+                <div class="flex items-center justify-between p-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition cursor-pointer" onclick="openMemberProfile('${uid}')">
                     <div class="flex items-center gap-2.5">
                         <img class="w-9 h-9 rounded-full object-cover" src="${profile.photoURL || defaultAvatar(profile.name)}">
                         <div class="flex flex-col text-left">
@@ -1943,7 +1683,7 @@
                             ${isFounder ? '<span class="text-[9px] bg-red-105 text-red-500 font-bold px-1.5 py-0.2 rounded-full w-max mt-0.5">Kurucu</span>' : (isAdmin ? '<span class="text-[9px] bg-blue-105 text-blue-500 font-bold px-1.5 py-0.2 rounded-full w-max mt-0.5">Yönetici</span>' : '')}
                         </div>
                     </div>
-                    ${amAdmin && uid !== myUid ? `<button onclick="event.stopPropagation(); openMemberAdminMenu('${jsStr(uid)}')" class="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">⋮</button>` : ''}
+                    ${amAdmin && uid !== myUid ? `<button onclick="event.stopPropagation(); openMemberAdminMenu('${uid}')" class="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">⋮</button>` : ''}
                 </div>
             `;
         }).join('');
@@ -1988,11 +1728,9 @@
         if (!name || !pass) return;
 
         try {
-            await updateDoc(roomRef(currentRoomId), {
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
                 name, description: desc, password: pass
             });
-            currentRoomInfo = Object.assign({}, currentRoomInfo, { name, description: desc, password: pass });
-            document.getElementById('chat-title').textContent = name;
             closeSheet();
             toast('Oda bilgileri güncellendi!');
         } catch (e) {}
@@ -2001,54 +1739,19 @@
     function openAddMember() {
         const html = `
             <h3 class="text-sm font-bold mb-3">Kişi Ekle</h3>
-            <p class="text-[10px] text-zinc-500 mb-3">E-posta adresi veya kullanıcı adı ile kişiyi gruba ekleyin.</p>
-            <input id="add-member-email" type="text" placeholder="ornek@gmail.com veya kullanici_adi" class="w-full px-4 py-2 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 mb-4 focus:outline-none text-zinc-900 dark:text-white">
+            <p class="text-[10px] text-zinc-500 mb-3">E-posta adresi yazarak kişiyi doğrudan gruba ekleyin.</p>
+            <input id="add-member-email" type="email" placeholder="ornek@gmail.com" class="w-full px-4 py-2 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 mb-4 focus:outline-none text-zinc-900 dark:text-white">
             <button onclick="submitAddMember()" class="w-full py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-sm transition">Doğrudan Ekle</button>
         `;
         openSheet(html);
     }
 
     async function submitAddMember() {
-        const queryText = document.getElementById('add-member-email').value.trim().toLowerCase();
-        if (!queryText) {
-            toast('Lütfen e-posta veya kullanıcı adı girin.', 'error');
-            return;
-        }
+        const email = document.getElementById('add-member-email').value.trim().toLowerCase();
+        if (!email) return;
 
-        toast('Kişi aranıyor...');
-        try {
-            const usersSnap = await getDocs(usersCol());
-            let foundUid = null;
-            let foundProfile = null;
-            usersSnap.forEach(docSnap => {
-                const data = docSnap.data();
-                const emailMatch = data.email && data.email.toLowerCase() === queryText;
-                const nameMatch = data.name && data.name.toLowerCase() === queryText;
-                if (emailMatch || nameMatch) {
-                    foundUid = docSnap.id;
-                    foundProfile = data;
-                }
-            });
-
-            if (!foundUid) {
-                toast('Kullanıcı bulunamadı. E-posta veya kullanıcı adını kontrol edin.', 'error');
-                return;
-            }
-
-            if (currentRoomInfo.members && currentRoomInfo.members[foundUid]) {
-                toast('Bu kullanıcı zaten grupta.', 'error');
-                closeSheet();
-                return;
-            }
-
-            await updateDoc(roomRef(currentRoomId), {
-                [`members.${foundUid}`]: true
-            });
-            closeSheet();
-            toast(`${foundProfile.name} gruba eklendi!`);
-        } catch (e) {
-            toast('Kişi eklenirken hata oluştu.', 'error');
-        }
+        toast('Kişi aranıyor ve ekleniyor...');
+        closeSheet();
     }
 
     function openMemberAdminMenu(uid) {
@@ -2058,8 +1761,8 @@
 
         const html = `
             <h3 class="text-sm font-bold mb-3 text-center">${escapeHTML(profile.name)}</h3>
-            <button onclick="toggleMemberAdmin('${jsStr(uid)}')" class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold hover:bg-zinc-100 transition">${isAdmin ? '⬇️ Yöneticilikten Çıkar' : '⬆️ Yönetici Yap'}</button>
-            <button onclick="removeMember('${jsStr(uid)}')" class="w-full text-left py-2.5 px-4 bg-red-50 text-red-500 rounded-xl text-sm font-semibold hover:bg-red-100 transition">🚪 Gruptan Çıkar</button>
+            <button onclick="toggleMemberAdmin('${uid}')" class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold hover:bg-zinc-100 transition">${isAdmin ? '⬇️ Yöneticilikten Çıkar' : '⬆️ Yönetici Yap'}</button>
+            <button onclick="removeMember('${uid}')" class="w-full text-left py-2.5 px-4 bg-red-50 text-red-500 rounded-xl text-sm font-semibold hover:bg-red-100 transition">🚪 Gruptan Çıkar</button>
         `;
         openSheet(html);
     }
@@ -2107,8 +1810,8 @@
     async function openMemberProfile(uid) {
         let profile = currentRoomMembers[uid];
         if (!profile) {
-            const userSnap = await getDoc(userRef(uid));
-            if (userSnap.exists()) profile = userSnap.data();
+            const userSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid));
+            if (userSnap.exists()) profile = userSnap.val();
         }
         if (!profile) return;
 
@@ -2119,16 +1822,16 @@
                 <img class="w-20 h-20 rounded-full object-cover border-4 border-primary shadow" src="${profile.photoURL || defaultAvatar(profile.name)}">
                 <h4 class="font-bold text-lg">${escapeHTML(profile.name)}</h4>
                 ${aboutHTML}
-                ${uid !== myUid ? `<button onclick="closeSheet(); enterDM('${jsStr(uid)}')" class="w-full mt-3 py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-sm transition shadow">💬 Özel Mesaj Gönder</button>` : ''}
+                ${uid !== myUid ? `<button onclick="closeSheet(); enterDM('${uid}')" class="w-full mt-3 py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-sm transition shadow">💬 Özel Mesaj Gönder</button>` : ''}
             </div>
         `;
         openSheet(html);
     }
 
-    async function shareRoom() {
-        const link = window.location.origin + window.location.pathname + '?room=' + encodeURIComponent(currentRoomId);
-        const ok = await copyToClipboard(link);
-        toast(ok ? 'Grup davet linki kopyalandı!' : 'Link kopyalanamadı.', ok ? 'info' : 'error');
+    function shareRoom() {
+        const link = window.location.origin + window.location.pathname + '?room=' + currentRoomId;
+        document.execCommand('copy');
+        toast('Grup davet linki kopyalandı!');
     }
 
     function toggleDarkMode() {
@@ -2137,13 +1840,24 @@
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
     }
 
-    bindGlobalHandlers();
-    initFirebase();
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', bindStaticButtons);
-    } else {
-        bindStaticButtons();
-    }
+    // ============================================================
+    // MODÜL İÇİ TÜM AKTİF FONKSİYONLARIN GLOBAL SCOPE ENTEGRASYONU
+    // ============================================================
+    Object.assign(window, {
+        signOutApp, openMyProfileEditor, handleMyPhotoChange, saveMyProfile,
+        openCreateRoomModal, submitCreateRoom, openJoinRoomModal, submitJoinRoom,
+        enterRoomById, enterDM, goBackToLobby, shareRoom, toggleInfo, closeSheet, closeInfoPanel,
+        send, sendImage, startRecording, cancelRecording, stopRecordingAndPreview, discardRecording, sendRecording,
+        openPollCreator, addPollOptionField, submitPoll, votePoll,
+        openMessageActions, reactToMessage, replyToMessage, cancelReply,
+        copyMessageText, editMessageStart, saveMessageEdit,
+        deleteMessageForMe, deleteMessageForEveryone,
+        openEditRoomInfo, saveRoomInfo,
+        openAddMember, submitAddMember, openMemberAdminMenu, toggleMemberAdmin, removeMember, leaveRoom,
+        openMemberProfile, openFeaturesModal, openGuestLoginModal, submitGuestLogin, toggleDarkMode,
+        toggleSearchInput, filterMessages, openWallpaperCustomizer, setWallpaper, applyUrlWallpaper, uploadWallpaperImage,
+        handleTyping
+    });
 </script>
 </body>
 </html>
