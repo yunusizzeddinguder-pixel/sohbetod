@@ -2,1862 +2,1002 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sohbetod | Güvenli, Şifreli ve Hızlı Mesajlaşma</title>
-
-    <meta name="description" content="Sohbetod: Güvenli, şifreli ve hızlı mesajlaşma platformu. Sesli mesaj ve gelişmiş oda özellikleriyle anında sohbete başla.">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            DEFAULT: '#2563EB',
-                            dark: '#1D4ED8',
-                            light: '#DBEAFE',
-                        },
-                        accent: '#FF7A59',
-                    }
-                }
-            }
-        }
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sohbetod Web Pro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-            font-family: 'Inter', sans-serif;
-        }
-        h1, h2, h3, h4, button {
-            font-family: 'Outfit', sans-serif;
-        }
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.15);
-            border-radius: 99px;
-        }
-        .dark ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.15);
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #334155; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes progress { from { width: 0%; } to { width: 100%; } }
+        
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .animate-slide-in { animation: slideIn 0.2s ease-out forwards; }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
+<body class="bg-[#06080c] text-gray-100 font-sans h-screen w-screen overflow-hidden antialiased">
 
-    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3" preload="auto"></audio>
-
-    <!-- ============ LOBİ EKRANI ============ -->
-    <div id="lobby-screen" class="flex flex-col items-center w-full h-full justify-start overflow-y-auto px-4 py-8 bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-800 text-white z-10">
-        <div class="w-full max-w-md flex flex-col items-center gap-6">
-            
-            <!-- Logo Tasarımı -->
-            <div class="flex flex-col items-center gap-2 mt-4">
-                <div class="w-20 h-20 bg-white dark:bg-zinc-800 rounded-3xl flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-300">
-                    <svg class="w-12 h-12 text-primary" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                    </svg>
-                </div>
-                <h1 class="text-3xl font-bold tracking-wider mt-2">SOHBETOD</h1>
-                <p class="text-xs text-blue-200 font-medium">Güvenli, Şifreli &amp; Hızlı</p>
-            </div>
-
-            <!-- Tanıtım Butonu -->
-            <button onclick="openFeaturesModal()" class="bg-white/10 hover:bg-white/20 transition px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2 border border-white/20">
-                ✨ Sohbetod Özelliklerini Keşfet
-            </button>
-
-            <!-- Giriş Kartı -->
-            <div id="auth-section" class="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white p-6 rounded-3xl w-full shadow-2xl flex flex-col gap-4">
-                <h2 class="text-xl font-bold text-center">Hoş Geldiniz</h2>
-                <p class="text-sm text-zinc-500 dark:text-zinc-400 text-center">Sohbete katılmak için bir giriş yöntemi seçin.</p>
-                
-                <button id="google-login-btn" class="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-2xl shadow transition flex items-center justify-center gap-2">
-                    Google ile Giriş Yap
-                </button>
-
-                <div class="relative flex py-2 items-center">
-                    <div class="flex-grow border-t border-zinc-200 dark:border-zinc-700"></div>
-                    <span class="flex-shrink mx-4 text-zinc-400 text-xs uppercase">veya</span>
-                    <div class="flex-grow border-t border-zinc-200 dark:border-zinc-700"></div>
-                </div>
-
-                <button id="guest-login-btn" onclick="openGuestLoginModal()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-900 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-white font-semibold rounded-2xl shadow transition flex items-center justify-center gap-2">
-                    👤 Misafir Olarak Giriş Yap
-                </button>
-            </div>
-
-            <!-- Giriş Yapmış Kullanıcı Alanı -->
-            <div id="logged-in-area" class="hidden w-full flex flex-col gap-4">
-                
-                <!-- Profil Özet Kartı -->
-                <div class="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white p-4 rounded-3xl shadow-xl flex items-center justify-between cursor-pointer hover:scale-[1.01] transition duration-200" onclick="openMyProfileEditor()">
-                    <div class="flex items-center gap-3">
-                        <img id="my-avatar-img" class="w-12 h-12 rounded-full object-cover border-2 border-primary" src="">
-                        <div class="flex flex-col text-left">
-                            <span id="my-name-label" class="font-bold text-base text-zinc-800 dark:text-zinc-100">Yükleniyor...</span>
-                            <span class="text-xs text-zinc-500 dark:text-zinc-400">Profili ve hakkımda kısmını düzenle</span>
-                        </div>
-                    </div>
-                    <span class="text-zinc-400 hover:text-primary transition text-xl">✏️</span>
-                </div>
-
-                <!-- Odalar Kartı -->
-                <div class="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white p-5 rounded-3xl shadow-xl">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-bold text-lg">Odalarım</h3>
-                        <div class="flex gap-2">
-                            <button class="px-3 py-1.5 bg-blue-50 dark:bg-zinc-700 text-primary dark:text-blue-300 font-bold rounded-full text-xs hover:bg-blue-100 dark:hover:bg-zinc-600 transition" onclick="openJoinRoomModal()">🔑 Katıl</button>
-                            <button class="px-3 py-1.5 bg-primary text-white font-bold rounded-full text-xs hover:bg-primary-dark transition" onclick="openCreateRoomModal()">+ Oluştur</button>
-                        </div>
-                    </div>
-                    <div id="my-rooms-list" class="flex flex-col gap-2 max-h-60 overflow-y-auto">
-                        <div class="text-center text-zinc-400 py-4 text-xs">Odalar yükleniyor...</div>
-                    </div>
-                </div>
-
-                <!-- Özel Mesajlar Kartı -->
-                <div class="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white p-5 rounded-3xl shadow-xl">
-                    <h3 class="font-bold text-lg mb-4">Özel Mesajlarım</h3>
-                    <div id="my-dms-list" class="flex flex-col gap-2 max-h-60 overflow-y-auto">
-                        <div class="text-center text-zinc-400 py-4 text-xs">Henüz özel mesajınız yok.</div>
-                    </div>
-                </div>
-
-                <div class="flex gap-2">
-                    <button onclick="toggleDarkMode()" class="flex-1 py-3 bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 font-bold rounded-2xl transition text-sm">
-                        🌓 Tema Değiştir
-                    </button>
-                    <button class="flex-1 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold rounded-2xl transition border border-red-500/20 text-sm" onclick="signOutApp()">
-                        Hesaptan Çıkış Yap
-                    </button>
-                </div>
-            </div>
-
-        </div>
+    <div id="app" class="h-full w-full flex flex-col justify-center items-center">
+        <!-- İçerik JavaScript ile Buraya Render Edilecek -->
     </div>
 
-    <!-- ============ SOHBET EKRANI ============ -->
-    <div id="app-container" class="hidden w-full h-full bg-zinc-50 dark:bg-zinc-950 relative z-20">
+    <script>
+        // --- HAFIZA VE EKRAN YÖNETİMİ (STATE) ---
+        let user = JSON.parse(localStorage.getItem('sohbetod_user')) || null;
+        let authStep = user ? 'app' : 'landing';
+        let activeTab = 'chats';
+        let activeRoom = null;
+        let showProfileSettings = false;
+        let showGroupInfoPanel = false;
+        let showNewGroupModal = false;
+        let showStatusModal = false;
+        let showPollModal = false;
+        let currentStatusViewer = null;
+        let statusViewModal = { show: false, views: [], likes: [] };
         
-        <!-- Sağdan Açılır Bilgi Paneli -->
-        <div id="info-panel" class="absolute top-0 right-[-100%] w-full max-w-md h-full bg-white dark:bg-zinc-900 shadow-2xl z-[1000] transition-all duration-300 flex flex-col p-6 overflow-y-auto hidden"></div>
+        let messageText = '';
+        let searchQuery = '';
+        let newGroupName = '';
+        let newGroupAbout = '';
+        let newGroupAvatar = '';
+        let newStatusText = '';
+        let newStatusMedia = null;
+        let pollQuestion = '';
+        let pollOptions = ['', ''];
+        
+        let activeMessageMenu = null;
+        let replyingMessage = null;
+        let aiGeneratingText = false;
 
-        <div class="w-full h-full max-w-lg mx-auto bg-white dark:bg-zinc-900 shadow-2xl flex flex-col relative">
+        // --- VERİTABANI SİMÜLASYONU ---
+        let allUsers = [
+            { uid: 'u_alperen', displayName: 'Alperen Şahin', email: 'alperen@gmail.com', photoURL: 'logo.jpg', about: 'Siber Güvenlik Uzmanı' },
+            { uid: 'u_ece', displayName: 'Ece Yalçın', email: 'ece@gmail.com', photoURL: 'logo.jpg', about: 'Tasarım her şeydir' },
+            { uid: 'u_mert', displayName: 'Mert Aksoy', email: 'mert@gmail.com', photoURL: 'logo.jpg', about: 'Kodluyorum...' }
+        ];
+
+        let rooms = [
+            { id: 'sohbetod-ai-assistant', name: '🤖 Sohbetod AI Asistanı', type: 'ai', photoURL: 'logo.jpg', lastMessage: 'Sohbetod asistanınız aktif. Her sorunuzu yanıtlamaya hazırım.', lastMessageTime: new Date().toISOString() },
+            { id: 'feedback-room', name: '📢 Şikayet ve Öneriler', type: 'system', photoURL: 'logo.jpg', lastMessage: 'Görüşleriniz otomatik olarak yunusizzeddinguder@gmail.com adresine iletilir.', lastMessageTime: new Date(Date.now() - 1000).toISOString() },
+            { id: 'room_global', name: 'Geliştiriciler Odası 💎', type: 'public', about: 'Sohbetod resmi test odasıdır.', photoURL: 'logo.jpg', participants: ['u_alperen', 'u_ece', 'u_mert'], joinRequests: [], creator: 'u_alperen', admins: ['u_alperen'], lastMessage: 'Test grubu aktiftir.', lastMessageTime: new Date().toISOString() }
+        ];
+
+        let messages = [
+            { id: 'm1', roomId: 'sohbetod-ai-assistant', senderId: 'ai', senderName: 'Sohbetod AI', text: 'Merhaba! Ben Sohbetod AI Asistanı. Size nasıl yardımcı olabilirim?', timestamp: new Date().toISOString(), type: 'text' },
+            { id: 'm2', roomId: 'feedback-room', senderId: 'system', senderName: 'Sistem', text: 'Tüm mesajlarınız yunusizzeddinguder@gmail.com adresine yönlendirilir.', timestamp: new Date().toISOString(), type: 'text' }
+        ];
+
+        let statusUpdates = [
+            { id: 'st1', userId: 'u_alperen', userName: 'Alperen Şahin', userAvatar: 'logo.jpg', content: 'Sistem güvenliği maksimum seviyede.', mediaUrl: null, mediaType: null, viewers: [], likes: [], timestamp: new Date().toISOString() }
+        ];
+
+        // --- SES EFEKTİ ---
+        function playSynthSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                if (type === 'sent') {
+                    osc.frequency.setValueAtTime(800, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    osc.start(); osc.stop(ctx.currentTime + 0.08);
+                } else if (type === 'received') {
+                    osc.frequency.setValueAtTime(600, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    osc.start(); osc.stop(ctx.currentTime + 0.12);
+                }
+            } catch (e) {}
+        }
+
+        function showToast(msg) {
+            alert("Sistem: " + msg);
+        }
+
+        // --- ANA ÇİZİM (RENDER) FONKSİYONU ---
+        function render() {
+            // Aktif input odaklanmasını korumak için
+            let activeInputId = document.activeElement ? document.activeElement.id : null;
             
-            <!-- Header -->
-            <header class="p-3 flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md z-10">
-                <button class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition" onclick="goBackToLobby()">
-                    <svg class="w-6 h-6 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                
-                <div id="info-trigger" class="flex-1 flex items-center gap-3 cursor-pointer min-w-0">
-                    <div class="relative">
-                        <img id="chat-avatar" class="w-10 h-10 rounded-full object-cover bg-zinc-200 dark:bg-zinc-700" src="">
-                        <span id="chat-online-badge" class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-zinc-900 rounded-full hidden"></span>
-                    </div>
-                    <div class="min-w-0">
-                        <span id="chat-subtitle-label" class="text-[10px] text-primary dark:text-blue-400 font-bold uppercase tracking-wider">Detay</span>
-                        <h4 id="chat-title" class="font-bold text-sm truncate text-zinc-800 dark:text-zinc-100">#oda</h4>
-                    </div>
-                </div>
+            const appDiv = document.getElementById('app');
 
-                <!-- Sohbet içi Arama, Duvar Kağıdı ve Paylaş Butonları -->
-                <button onclick="toggleSearchInput()" class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition text-lg">🔍</button>
-                <button onclick="openWallpaperCustomizer()" class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition text-lg">🎨</button>
-                <button id="share-room-btn" class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition text-lg hidden" onclick="shareRoom()">🔗</button>
-            </header>
-
-            <!-- Arama Barı -->
-            <div id="search-bar" class="hidden p-2 bg-zinc-100 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 flex gap-2 z-10">
-                <input id="search-input" type="text" placeholder="Mesajlarda ara..." oninput="filterMessages()" class="flex-1 px-3 py-1.5 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-zinc-100">
-                <button onclick="toggleSearchInput()" class="text-xs font-semibold text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 px-2">✕ Kapat</button>
-            </div>
-
-            <!-- Cevaplama Barı -->
-            <div id="reply-preview-bar" class="hidden flex items-center justify-between p-3 bg-blue-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 text-xs text-primary dark:text-blue-300 z-10">
-                <div class="reply-text truncate flex-1 font-medium"></div>
-                <button onclick="cancelReply()" class="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full">✕</button>
-            </div>
-
-            <!-- Mesaj Listesi -->
-            <div id="messages" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3" style="background-color: #efeae2;">
-                <!-- Mesajlar dinamik eklenecek -->
-            </div>
-
-            <!-- Karşı Taraf Yazıyor... Göstergesi -->
-            <div id="typing-indicator" class="px-4 py-1.5 text-xs text-zinc-500 dark:text-zinc-400 bg-white/95 dark:bg-zinc-900/95 hidden border-t border-zinc-100 dark:border-zinc-850">
-                <span class="animate-pulse">✍️ <span id="typing-users">Biri</span> yazıyor...</span>
-            </div>
-
-            <!-- Ses Kaydı Panelleri -->
-            <div id="record-bar" class="hidden flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/20 border-t border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-red-500">
-                <button onclick="cancelRecording()" class="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full">🗑️ İptal</button>
-                <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
-                    <span id="record-timer">00:00</span>
-                    <span>Kaydediliyor...</span>
-                </div>
-                <button onclick="stopRecordingAndPreview()" class="px-3 py-1.5 bg-green-500 text-white rounded-full">✓ Bitir</button>
-            </div>
-
-            <div id="voice-preview-bar" class="hidden flex items-center gap-3 p-3 bg-blue-50 dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-800">
-                <button onclick="discardRecording()" class="p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full">🗑️ Sil</button>
-                <audio id="voice-preview-audio" controls class="flex-1 h-8"></audio>
-                <button onclick="sendRecording()" class="px-4 py-2 bg-primary text-white font-bold rounded-xl shadow hover:bg-primary-dark transition text-xs">➤ Gönder</button>
-            </div>
-
-            <!-- Giriş Alanı -->
-            <div class="p-3 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 pb-safe">
-                <div class="flex items-center gap-2" id="input-row">
-                    <button id="voice-msg-btn" class="p-2.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full text-base transition" onclick="startRecording()">🎤</button>
-                    <input type="file" id="img-input" accept="image/*" class="hidden" onchange="sendImage(this)">
-                    <button class="p-2.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full text-base transition" onclick="document.getElementById('img-input').click()">🖼️</button>
-                    <button class="p-2.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full text-base transition" onclick="openPollCreator()">📊</button>
-                    
-                    <input type="text" id="msg-input" placeholder="Bir mesaj yazın..." autocomplete="off" oninput="handleTyping()" onkeydown="if(event.key==='Enter'){ event.preventDefault(); send(); }" class="flex-1 px-4 py-2.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white">
-                    
-                    <button onclick="send()" class="p-2.5 bg-primary hover:bg-primary-dark text-white rounded-full transition shadow">
-                        <svg class="w-5 h-5 transform rotate-90" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                    </button>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Modalların Çizileceği Kök Element -->
-    <div id="modal-root" class="z-50 relative"></div>
-
-<script type="module">
-    // Firebase SDK Modülleri
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // Global Proje Kimlikleri (İletişim Yapısına Uygun)
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'sohbetod-premium-system';
-    const provider = new GoogleAuthProvider();
-
-    const REACTIONS = ['👍','❤️','😂','😮','😢','🙏'];
-
-    // Durum Değişkenleri
-    let myUid = null;
-    let myProfile = { name: '', photoURL: '', about: '', aboutPublic: false, isGuest: false };
-    
-    let currentChatType = null; // 'room' | 'dm'
-    let currentRoomId = null;
-    let currentDmUid = null;
-    let currentChatId = null;
-
-    let currentRoomInfo = null;
-    let currentRoomMembers = {};
-    let currentRoomAdmins = {};
-
-    let messagesCache = {};
-    let replyContext = null;
-
-    // Aktif Dinleyici Tanımları
-    let activeChatUnsub = null;
-    let activeRoomMembersUnsub = null;
-    let typingUnsub = null;
-    let presenceInterval = null;
-
-    // Ses Kaydı Değişkenleri
-    let mediaRecorder = null, mediaStream = null, audioChunks = [];
-    let recordTimerInterval = null, recordSeconds = 0, recordedBlobForSend = null, recordedBlobURL = null;
-
-    // Sekme Aktiflik Kontrolleri
-    let isTabActive = true;
-    window.onfocus = () => { isTabActive = true; updateOnlineStatus(true); };
-    window.onblur = () => { isTabActive = false; };
-
-    // --- HTML Güvenli Çeviri ---
-    function escapeHTML(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    }
-
-    // --- SVG Dinamik Avatar Oluşturma ---
-    function defaultAvatar(name) {
-        const safe = (name || '?').trim();
-        const letter = safe.charAt(0).toUpperCase() || '?';
-        const colors = ['#2563EB', '#FF7A59', '#10B981', '#EF4444', '#06B6D4', '#8B5CF6'];
-        let hash = 0;
-        for (let i = 0; i < safe.length; i++) hash = (hash * 31 + safe.charCodeAt(i)) % 997;
-        const color = colors[Math.abs(hash) % colors.length];
-        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' rx='40' fill='${color}'/><text x='50%' y='57%' font-size='34' fill='white' text-anchor='middle' font-family='Outfit,sans-serif'>${letter}</text></svg>`;
-        return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-    }
-
-    // --- Şık Bildirim Modülü (Toast) ---
-    function toast(msg, type = 'info') {
-        const root = document.getElementById('modal-root');
-        const color = type === 'error' ? 'bg-red-600 text-white shadow-red-500/20' : 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950';
-        const t = document.createElement('div');
-        t.className = `fixed bottom-24 left-1/2 -translate-x-1/2 ${color} px-5 py-3 rounded-full text-xs font-semibold z-[4000] shadow-2xl transition-all duration-300 opacity-0 translate-y-4`;
-        t.textContent = msg;
-        root.appendChild(t);
-        requestAnimationFrame(() => {
-            t.classList.remove('opacity-0', 'translate-y-4');
-            t.classList.add('opacity-100', 'translate-y-0');
-        });
-        setTimeout(() => {
-            t.classList.add('opacity-0', 'translate-y-4');
-            setTimeout(() => t.remove(), 300);
-        }, 2200);
-    }
-
-    // --- Görsel Sıkıştırma (Base64) ---
-    function resizeImageFile(file, maxDim = 800, quality = 0.75) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    let { width, height } = img;
-                    if (width > maxDim || height > maxDim) {
-                        if (width > height) { height = Math.round(height * maxDim / width); width = maxDim; }
-                        else { width = Math.round(width * maxDim / height); height = maxDim; }
-                    }
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width; canvas.height = height;
-                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', quality));
-                };
-                img.onerror = reject;
-                img.src = e.target.result;
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // --- Bildirim İzin Talebi ---
-    async function requestNotifPermission() {
-        if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
-            try { await Notification.requestPermission(); } catch (e) {}
-        }
-    }
-
-    function playDing() {
-        const el = document.getElementById('notif-sound');
-        try { el.currentTime = 0; el.play().catch(() => {}); } catch (e) {}
-    }
-
-    function notifyIncoming(data) {
-        if (data.uid === myUid) return;
-        playDing();
-        if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && !isTabActive) {
-            let desc = data.m || (data.img ? '📷 Fotoğraf' : (data.v ? '🎤 Sesli Mesaj' : 'Anket'));
-            new Notification('Sohbetod', { body: `${data.u}: ${desc}` });
-        }
-    }
-
-    // --- Şık Modalları Çizme ve Temizleme Altyapısı ---
-    function openSheet(html) {
-        const root = document.getElementById('modal-root');
-        root.innerHTML = `
-            <div class="fixed inset-0 bg-black/60 z-[2000] backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 transition-opacity duration-200" id="sheet-backdrop" onclick="if(event.target===this) closeSheet()">
-                <div class="bg-white dark:bg-zinc-900 w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl transform translate-y-full sm:translate-y-4 transition-transform duration-300 max-h-[85vh] overflow-y-auto text-zinc-900 dark:text-white" id="sheet-card">
-                    ${html}
-                </div>
-            </div>
-        `;
-        const b = document.getElementById('sheet-backdrop');
-        const c = document.getElementById('sheet-card');
-        requestAnimationFrame(() => {
-            b.classList.remove('opacity-0');
-            c.classList.remove('translate-y-full', 'sm:translate-y-4');
-            c.classList.add('translate-y-0');
-        });
-    }
-
-    function closeSheet() {
-        const b = document.getElementById('sheet-backdrop');
-        const c = document.getElementById('sheet-card');
-        if (!b) return;
-        b.classList.add('opacity-0');
-        c.classList.add('translate-y-full');
-        setTimeout(() => { document.getElementById('modal-root').innerHTML = ''; }, 220);
-    }
-
-    // ============================================================
-    // FIREBASE KİMLİK DOĞRULAMA (RULE 3 UYUMU)
-    // ============================================================
-    const initAuth = async () => {
-        try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        } catch (e) {
-            console.error("Kimlik doğrulama hatası:", e);
-        }
-    };
-
-    window.addEventListener('load', async () => {
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
-        
-        await initAuth();
-        
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                showLobbyLoggedOut();
-                return;
-            }
-            
-            // Eğer misafir veya özel oturum önbellekte varsa
-            const savedSession = localStorage.getItem('guest_session');
-            if (savedSession) {
-                const creds = JSON.parse(savedSession);
-                myUid = creds.uid;
-                loadUserProfile(myUid);
-                return;
-            }
-
-            // Google kullanıcısı ise
-            if (user && !user.isAnonymous) {
-                myUid = user.uid;
-                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', myUid);
-                const userSnap = await getDoc(userDocRef);
-                if (userSnap.exists()) {
-                    myProfile = userSnap.val();
-                } else {
-                    myProfile = { name: user.displayName || 'Kullanıcı', photoURL: user.photoURL || '', about: 'Sohbetod Premium üyesi.', aboutPublic: true, isGuest: false };
-                    await setDoc(userDocRef, myProfile);
-                }
-                showLobbyLoggedIn();
-                loadLobby();
-                startPresence();
-                return;
-            }
-
-            showLobbyLoggedOut();
-        });
-    });
-
-    async function loadUserProfile(uid) {
-        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', uid);
-        const userSnap = await getDoc(userDocRef);
-        if (userSnap.exists()) {
-            myProfile = userSnap.val();
-            showLobbyLoggedIn();
-            loadLobby();
-            startPresence();
-        } else {
-            localStorage.removeItem('guest_session');
-            showLobbyLoggedOut();
-        }
-    }
-
-    function showLobbyLoggedOut() {
-        document.getElementById('auth-section').classList.remove('hidden');
-        document.getElementById('logged-in-area').classList.add('hidden');
-        document.getElementById('app-container').classList.add('hidden');
-        document.getElementById('lobby-screen').classList.remove('hidden');
-    }
-
-    function showLobbyLoggedIn() {
-        document.getElementById('auth-section').classList.add('hidden');
-        document.getElementById('logged-in-area').classList.remove('hidden');
-        refreshLobbyProfileUI();
-    }
-
-    function refreshLobbyProfileUI() {
-        document.getElementById('my-avatar-img').src = myProfile.photoURL || defaultAvatar(myProfile.name);
-        document.getElementById('my-name-label').textContent = myProfile.name;
-    }
-
-    // Google Login İşleyicisi
-    document.getElementById('google-login-btn').onclick = async () => {
-        await requestNotifPermission();
-        try {
-            await signInWithPopup(auth, provider);
-        } catch (e) {
-            toast('Google girişi başarısız.', 'error');
-        }
-    };
-
-    // ============================================================
-    // GELİŞMİŞ ŞİFRELİ MİSAFİR GİRİŞ SİSTEMİ
-    // ============================================================
-    let wrongAttempts = 0;
-    
-    function openGuestLoginModal() {
-        const html = `
-            <h3 class="text-lg font-bold mb-4 text-center">👤 Misafir Girişi / Kayıt</h3>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 mb-4 text-center">İlk kez giriyorsanız şifreniz oluşturulur. Diğer cihazlardan bu şifreyle girebilirsiniz.</p>
-            <input id="guest-username" type="text" placeholder="Kullanıcı Adı" class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-850 mb-3 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white">
-            <input id="guest-password" type="password" placeholder="Şifre (En az 6 Karakter)" class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-850 mb-4 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white">
-            <button onclick="submitGuestLogin()" class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-2xl shadow-md transition text-sm">Giriş Yap / Kaydol</button>
-        `;
-        openSheet(html);
-    }
-
-    async function submitGuestLogin() {
-        const username = document.getElementById('guest-username').value.trim();
-        const password = document.getElementById('guest-password').value.trim();
-
-        if (!username || password.length < 6) {
-            toast('Kullanıcı adı ve en az 6 karakterlik şifre gereklidir.', 'error');
-            return;
-        }
-
-        const cleanUsername = username.replace(/[^a-zA-Z0-9_ğüşöçİĞÜŞÖÇ]/g, '');
-        if (!cleanUsername) {
-            toast('Kullanıcı adı geçersiz karakterler içeriyor.', 'error');
-            return;
-        }
-
-        // Firebase kurallarına uygun yolda kayıt denetimi
-        const credsRef = doc(db, 'artifacts', appId, 'public', 'data', 'guest_credentials', cleanUsername);
-        
-        try {
-            const credsSnap = await getDoc(credsRef);
-            if (!credsSnap.exists()) {
-                // Yeni Kayıt Oluşturma
-                const customUid = 'guest_' + cleanUsername + '_' + Math.random().toString(36).substr(2, 9);
-                await setDoc(credsRef, { password: password, uid: customUid });
-                
-                myProfile = { name: cleanUsername, photoURL: '', about: 'Sohbetod Premium üyesi.', aboutPublic: true, isGuest: true };
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', customUid), myProfile);
-                
-                myUid = customUid;
-                localStorage.setItem('guest_session', JSON.stringify({ username: cleanUsername, uid: customUid }));
-                wrongAttempts = 0;
-                closeSheet();
-                showLobbyLoggedIn();
-                loadLobby();
-                startPresence();
-                toast('Kayıt başarıyla tamamlandı!');
-            } else {
-                // Giriş Denetleme
-                const data = credsSnap.val();
-                if (data.password === password) {
-                    myUid = data.uid;
-                    localStorage.setItem('guest_session', JSON.stringify({ username: cleanUsername, uid: data.uid }));
-                    wrongAttempts = 0;
-                    closeSheet();
-                    await loadUserProfile(myUid);
-                    toast('Başarıyla giriş yapıldı!');
-                } else {
-                    wrongAttempts++;
-                    if (wrongAttempts >= 3) {
-                        toast('3 kez yanlış şifre girdiniz! Ana sayfaya dönülüyor.', 'error');
-                        wrongAttempts = 0;
-                        closeSheet();
-                        showLobbyLoggedOut();
-                    } else {
-                        toast(`Hatalı şifre! (Kalan hak: ${3 - wrongAttempts})`, 'error');
-                    }
-                }
-            }
-        } catch (e) {
-            toast('Bağlantı veya yetkilendirme hatası oluştu.', 'error');
-            console.error(e);
-        }
-    }
-
-    function signOutApp() {
-        const conf = confirm('Çıkış yapmak istediğinize emin misiniz?');
-        if (!conf) return;
-        localStorage.removeItem('guest_session');
-        signOut(auth);
-        myUid = null;
-        showLobbyLoggedOut();
-    }
-
-    // ============================================================
-    // ÇEVRİM İÇİ / PRESENCE SİSTEMİ
-    // ============================================================
-    function startPresence() {
-        if (presenceInterval) clearInterval(presenceInterval);
-        updateOnlineStatus(true);
-        presenceInterval = setInterval(() => {
-            updateOnlineStatus(true);
-        }, 8000);
-    }
-
-    async function updateOnlineStatus(status) {
-        if (!myUid) return;
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', myUid), {
-                lastActive: status ? Date.now() : 0
-            });
-        } catch (e) {}
-    }
-
-    // ============================================================
-    // SOHBETOD ÖZELLİKLERİ MODAL PANALİ
-    // ============================================================
-    function openFeaturesModal() {
-        const html = `
-            <h3 class="text-xl font-bold mb-4 text-center text-primary dark:text-blue-400">✨ SOHBETOD Premium Özellikleri</h3>
-            <div class="flex flex-col gap-3 text-sm text-zinc-700 dark:text-zinc-300">
-                <div class="flex items-start gap-2.5">
-                    <span class="text-lg">🎤</span>
-                    <div><b>Ses Kayıt Sistemi:</b> WhatsApp tarzı anlık dinlenebilir, durdurulabilir ve doğrudan gönderilebilir ses kayıt teknolojisi.</div>
-                </div>
-                <div class="flex items-start gap-2.5">
-                    <span class="text-lg">📊</span>
-                    <div><b>Anlık Anketler:</b> Çoklu seçenekli, gerçek zamanlı oy kullanılan akıllı anket sistemi.</div>
-                </div>
-                <div class="flex items-start gap-2.5">
-                    <span class="text-lg">✔✔</span>
-                    <div><b>Okundu Bilgisi:</b> Tek gri, çift gri (iletildi) ve çift mavi (görüldü/okundu) akıllı tık sistemleri.</div>
-                </div>
-                <div class="flex items-start gap-2.5">
-                    <span class="text-lg">🎨</span>
-                    <div><b>Kişisel Duvar Kağıtları:</b> Her sohbete özel düz renkler veya dilediğin resim/URL arka planları.</div>
-                </div>
-                <div class="flex items-start gap-2.5">
-                    <span class="text-lg">👤</span>
-                    <div><b>Şifreli Misafir Girişi:</b> Kullanıcı adını şifreleyerek tüm cihazlardan güvenli ve korumalı erişim.</div>
-                </div>
-                <div class="flex items-start gap-2.5">
-                    <span class="text-lg">🔍</span>
-                    <div><b>Mesaj Arama:</b> Sohbet içi yazışmalarda anında filtreleme ile hızlı arama yapabilme.</div>
-                </div>
-                <div class="flex items-start gap-2.5">
-                    <span class="text-lg">✏️</span>
-                    <div><b>Mesaj Düzenleme & Silme:</b> Herkesten sil, benden sil ve mesaj düzenleme modülleri.</div>
-                </div>
-            </div>
-            <button onclick="closeSheet()" class="w-full mt-5 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-2xl transition text-sm shadow-md">Harika! Şimdi Başla</button>
-        `;
-        openSheet(html);
-    }
-
-    // ============================================================
-    // PROFİL VE HAKKIMDA DÜZENLEME
-    // ============================================================
-    let pendingMyPhotoDataURL = null;
-    
-    function openMyProfileEditor() {
-        pendingMyPhotoDataURL = null;
-        const html = `
-            <h3 class="text-lg font-bold mb-4 text-center">👤 Profilimi Düzenle</h3>
-            <div class="flex flex-col items-center gap-2 mb-4">
-                <img id="my-photo-preview" class="w-24 h-24 rounded-full object-cover border-4 border-primary shadow-lg" src="${myProfile.photoURL || defaultAvatar(myProfile.name)}">
-                <label class="text-xs text-primary font-bold cursor-pointer hover:underline mt-1">
-                    Fotoğrafı Değiştir
-                    <input type="file" accept="image/*" class="hidden" onchange="handleMyPhotoChange(this)">
-                </label>
-            </div>
-            <div class="flex flex-col gap-2 mb-4 text-left">
-                <label class="text-xs text-zinc-500 font-bold uppercase">Hakkımda</label>
-                <textarea id="my-about" class="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white" placeholder="Hakkımda bir şeyler yazın...">${escapeHTML(myProfile.about || '')}</textarea>
-            </div>
-            <label class="flex items-center gap-2.5 text-xs text-zinc-600 dark:text-zinc-400 mb-4 cursor-pointer text-left">
-                <input type="checkbox" id="my-about-public" ${myProfile.aboutPublic ? 'checked' : ''} class="rounded text-primary focus:ring-primary w-4 h-4">
-                <span>Hakkımda bilgimi diğer kullanıcılar görebilsin</span>
-            </label>
-            <button onclick="saveMyProfile()" class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-2xl transition text-sm shadow-md">Değişiklikleri Kaydet</button>
-        `;
-        openSheet(html);
-    }
-
-    async function handleMyPhotoChange(input) {
-        const file = input.files[0];
-        if (!file) return;
-        try {
-            const dataUrl = await resizeImageFile(file, 200, 0.8);
-            pendingMyPhotoDataURL = dataUrl;
-            document.getElementById('my-photo-preview').src = dataUrl;
-        } catch (e) {
-            toast('Görsel sıkıştırılamadı.', 'error');
-        }
-    }
-
-    async function saveMyProfile() {
-        const about = document.getElementById('my-about').value.trim();
-        const aboutPublic = document.getElementById('my-about-public').checked;
-        const updates = { about, aboutPublic };
-        if (pendingMyPhotoDataURL) updates.photoURL = pendingMyPhotoDataURL;
-        
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', myUid), updates);
-            myProfile = Object.assign({}, myProfile, updates);
-            refreshLobbyProfileUI();
-            closeSheet();
-            toast('Profiliniz güncellendi!');
-        } catch (e) {
-            toast('Profil güncellenirken hata oluştu.', 'error');
-        }
-    }
-
-    // ============================================================
-    // LOBİ - ODALAR & MESAJLAR LİSTELEME
-    // ============================================================
-    function loadLobby() {
-        // Rooms dinleyici
-        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), (snapshot) => {
-            const list = document.getElementById('my-rooms-list');
-            let matchedRooms = [];
-            snapshot.forEach(docSnap => {
-                const data = docSnap.data();
-                if (data.members && data.members[myUid]) {
-                    matchedRooms.push(data);
-                }
-            });
-
-            if (matchedRooms.length === 0) {
-                list.innerHTML = '<div class="text-center text-zinc-400 py-4 text-xs">Katıldığınız bir oda yok. Katılın veya yeni oda oluşturun!</div>';
-            } else {
-                list.innerHTML = matchedRooms.map(room => `
-                    <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer" onclick="enterRoomById('${room.id}')">
-                        <div class="flex items-center gap-3">
-                            <img class="w-10 h-10 rounded-full object-cover" src="${room.photoURL || defaultAvatar(room.name)}">
-                            <div class="flex flex-col text-left">
-                                <b class="text-sm font-semibold text-zinc-800 dark:text-zinc-100">${escapeHTML(room.name)}</b>
-                                <span class="text-xs text-zinc-500 dark:text-zinc-400 truncate w-48">${escapeHTML(room.description || 'Açıklama yok')}</span>
-                            </div>
+            if (authStep === 'landing') {
+                appDiv.innerHTML = `
+                    <div class="flex flex-col items-center justify-center w-full h-full bg-gradient-to-tr from-[#0a0715] via-[#05070a] to-[#0c1820] relative p-4 animate-fade-in">
+                        <div class="p-8 text-center bg-slate-950/45 backdrop-blur-2xl rounded-3xl border border-white/5 max-w-md w-full relative z-10">
+                            <img src="logo.jpg" alt="Logo" class="w-28 h-28 rounded-full border-2 border-cyan-500/50 shadow-2xl mx-auto mb-6 object-cover">
+                            <h1 class="text-5xl font-extrabold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent mb-3 tracking-tight">Sohbetod</h1>
+                            <p class="text-cyan-100/70 mb-8 text-sm font-medium px-4">Dosya paylaşımı, Durumlar, Sohbetod AI ve Gelişmiş Gruplarla iletişim ağınız.</p>
+                            <button onclick="changeAuthStep('login')" class="w-full bg-white hover:bg-cyan-50 text-slate-950 font-bold py-3.5 px-6 rounded-xl shadow-lg transition-all cursor-pointer">Ağa Katıl</button>
                         </div>
-                        <span class="text-xs text-zinc-400">➔</span>
                     </div>
-                `).join('');
+                `;
+                return;
             }
-        });
 
-        // DMs dinleyici
-        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'dms'), (snapshot) => {
-            const list = document.getElementById('my-dms-list');
-            let matchedDms = [];
-            snapshot.forEach(docSnap => {
-                const data = docSnap.data();
-                if (data.user1 === myUid || data.user2 === myUid) {
-                    matchedDms.push(data);
-                }
-            });
-
-            if (matchedDms.length === 0) {
-                list.innerHTML = '<div class="text-center text-zinc-400 py-4 text-xs">Henüz özel mesajınız yok.</div>';
-            } else {
-                list.innerHTML = matchedDms.map(dm => {
-                    const isUser1 = dm.user1 === myUid;
-                    const otherUid = isUser1 ? dm.user2 : dm.user1;
-                    const otherName = isUser1 ? dm.user2_name : dm.user1_name;
-                    const otherPhoto = isUser1 ? dm.user2_photo : dm.user1_photo;
-                    
-                    return `
-                        <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 rounded-2xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer" onclick="enterDM('${otherUid}')">
-                            <div class="flex items-center gap-3">
-                                <img class="w-10 h-10 rounded-full object-cover" src="${otherPhoto || defaultAvatar(otherName)}">
-                                <div class="flex flex-col text-left">
-                                    <b class="text-sm font-semibold text-zinc-800 dark:text-zinc-100">${escapeHTML(otherName)}</b>
-                                    <span class="text-xs text-green-500 font-medium">Özel Sohbet</span>
+            if (authStep === 'login') {
+                appDiv.innerHTML = `
+                    <div class="flex flex-col items-center justify-center w-full h-full bg-[#05070a] p-4 animate-fade-in">
+                        <div class="w-full max-w-md p-8 bg-[#0c0f16] border border-slate-800 shadow-2xl rounded-3xl text-center">
+                            <img src="logo.jpg" class="w-16 h-16 rounded-full mx-auto mb-4 border-2 border-cyan-500/40 object-cover">
+                            <h2 class="text-2xl font-bold text-gray-100">Kimlik Doğrulama</h2>
+                            <div class="space-y-5 mt-6 text-left">
+                                <div>
+                                    <label class="block text-xs font-bold text-cyan-400 mb-1.5 uppercase">E-Posta</label>
+                                    <input type="email" id="emailInput" placeholder="ornek@gmail.com" class="w-full px-4 py-3 border border-slate-800 bg-[#06080d] rounded-xl text-sm text-gray-100 focus:outline-none focus:border-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-cyan-400 mb-1.5 uppercase">Kullanıcı Adı</label>
+                                    <input type="text" id="nameInput" placeholder="Benzersiz isim..." class="w-full px-4 py-3 border border-slate-800 bg-[#06080d] rounded-xl text-sm text-gray-100 focus:outline-none focus:border-cyan-500">
+                                </div>
+                                <div class="flex justify-between items-center pt-4">
+                                    <button onclick="changeAuthStep('landing')" class="text-gray-400 hover:text-white text-xs font-semibold cursor-pointer">İptal</button>
+                                    <button onclick="loginUser()" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 text-white font-bold py-2.5 px-8 rounded-xl text-sm cursor-pointer">Giriş Yap</button>
                                 </div>
                             </div>
-                            <span class="text-xs text-zinc-400">➔</span>
                         </div>
-                    `;
-                }).join('');
-            }
-        });
-    }
-
-    // Oda Oluşturma
-    function openCreateRoomModal() {
-        const html = `
-            <h3 class="text-lg font-bold mb-4 text-center">🏢 Yeni Oda Oluştur</h3>
-            <input id="new-room-name" type="text" placeholder="Oda Adı" class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-850 mb-3 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white">
-            <textarea id="new-room-desc" placeholder="Açıklama (Opsiyonel)" class="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-850 text-sm focus:outline-none mb-3 text-zinc-900 dark:text-white"></textarea>
-            <input id="new-room-pass" type="password" placeholder="Giriş Şifresi" class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-850 mb-4 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white">
-            <button onclick="submitCreateRoom()" class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-2xl transition text-sm shadow-md">Odayı Oluştur</button>
-        `;
-        openSheet(html);
-    }
-
-    async function submitCreateRoom() {
-        const name = document.getElementById('new-room-name').value.trim();
-        const desc = document.getElementById('new-room-desc').value.trim();
-        const pass = document.getElementById('new-room-pass').value.trim();
-
-        if (!name || !pass) {
-            toast('Oda adı ve şifre zorunludur.', 'error');
-            return;
-        }
-
-        const roomId = name.toLocaleLowerCase('tr-TR').replace(/\s+/g, '-').replace(/[^a-z0-9\-çğıöşü]/g, '');
-        if (!roomId) {
-            toast('Geçersiz oda adı.', 'error');
-            return;
-        }
-
-        const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-        try {
-            const snap = await getDoc(roomDocRef);
-            if (snap.exists()) {
-                toast('Bu oda adı zaten mevcut.', 'error');
+                    </div>
+                `;
                 return;
             }
 
-            const roomData = {
-                id: roomId,
-                name: name,
-                description: desc,
-                password: pass,
-                founder: myUid,
-                createdAt: Date.now(),
-                members: { [myUid]: true },
-                admins: { [myUid]: true }
-            };
+            // --- DASHBOARD ---
+            let sidebarHidden = activeRoom ? 'hidden md:flex' : 'flex';
+            let chatHidden = activeRoom ? 'flex' : 'hidden md:flex';
 
-            await setDoc(roomDocRef, roomData);
-            closeSheet();
-            enterRoomById(roomId);
-            toast('Oda başarıyla oluşturuldu!');
-        } catch (e) {
-            toast('Oda oluşturulurken hata.', 'error');
-        }
-    }
+            // Odalar Listesi
+            let roomListHTML = rooms.map(room => {
+                let isParticipant = room.participants && room.participants.includes(user.uid);
+                let isSystemOrAi = room.type === 'system' || room.type === 'ai';
+                if (!isParticipant && !isSystemOrAi) return ''; // Sadece içinde olduğum odaları göster
 
-    // Odaya Katılma
-    function openJoinRoomModal() {
-        const html = `
-            <h3 class="text-lg font-bold mb-4 text-center">🔑 Odaya Şifreyle Katıl</h3>
-            <input id="join-room-name" type="text" placeholder="Oda Adı" class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-850 mb-3 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white">
-            <input id="join-room-pass" type="password" placeholder="Oda Şifresi" class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-850 mb-4 text-sm focus:outline-none focus:border-primary text-zinc-900 dark:text-white">
-            <button onclick="submitJoinRoom()" class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-2xl transition text-sm shadow-md">Katıl</button>
-        `;
-        openSheet(html);
-    }
+                let activeClass = activeRoom && activeRoom.id === room.id ? 'bg-[#111622] border-l-4 border-cyan-500' : 'border-l-4 border-transparent';
+                return `
+                    <div onclick="selectRoom('${room.id}')" class="flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-800/40 transition-all ${activeClass}">
+                        <div class="relative w-12 h-12 rounded-full flex items-center justify-center border border-slate-700 overflow-hidden shrink-0">
+                            <img src="${room.photoURL}" onerror="this.src='logo.jpg'" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline mb-1">
+                                <h5 class="font-bold text-sm text-gray-100 truncate">${room.name}</h5>
+                            </div>
+                            <p class="text-xs text-gray-400 truncate">${room.lastMessage || ''}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
 
-    async function submitJoinRoom() {
-        const nameRaw = document.getElementById('join-room-name').value.trim();
-        const pass = document.getElementById('join-room-pass').value.trim();
-
-        if (!nameRaw || !pass) {
-            toast('Lütfen tüm alanları doldurun.', 'error');
-            return;
-        }
-
-        const roomId = nameRaw.toLocaleLowerCase('tr-TR').replace(/\s+/g, '-');
-        const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-        
-        try {
-            const snap = await getDoc(roomDocRef);
-            if (!snap.exists()) {
-                toast('Oda bulunamadı.', 'error');
-                return;
-            }
-
-            const room = snap.val();
-            if (room.password !== pass) {
-                toast('Hatalı şifre!', 'error');
-                return;
-            }
-
-            const updates = { [`members.${myUid}`]: true };
-            await updateDoc(roomDocRef, updates);
-            closeSheet();
-            enterRoomById(roomId);
-            toast('Odaya katıldınız!');
-        } catch (e) {
-            toast('Katılım sırasında hata oluştu.', 'error');
-        }
-    }
-
-    // ============================================================
-    // SOHBET ALANINA GİRİŞ/ÇIKIŞ VE GEÇİŞ
-    // ============================================================
-    function leaveCurrentChatContext() {
-        if (activeChatUnsub) { activeChatUnsub(); activeChatUnsub = null; }
-        if (activeRoomMembersUnsub) { activeRoomMembersUnsub(); activeRoomMembersUnsub = null; }
-        if (typingUnsub) { typingUnsub(); typingUnsub = null; }
-        cancelReply();
-    }
-
-    function switchToChatScreen() {
-        document.getElementById('lobby-screen').classList.add('hidden');
-        document.getElementById('app-container').classList.remove('hidden');
-        document.getElementById('messages').innerHTML = '';
-        
-        loadStoredWallpaper();
-
-        const shareBtn = document.getElementById('share-room-btn');
-        const infoTrigger = document.getElementById('info-trigger');
-        const subtitleLabel = document.getElementById('chat-subtitle-label');
-        
-        if (currentChatType === 'room') {
-            shareBtn.classList.remove('hidden');
-            infoTrigger.onclick = toggleInfo;
-            subtitleLabel.textContent = 'ℹ️ GRUP BİLGİSİ';
-        } else {
-            shareBtn.classList.add('hidden');
-            infoTrigger.onclick = () => openMemberProfile(currentDmUid);
-            subtitleLabel.textContent = '👤 PROFİL';
-        }
-        closeInfoPanel();
-    }
-
-    function goBackToLobby() {
-        leaveCurrentChatContext();
-        currentChatType = null;
-        currentRoomId = null;
-        currentDmUid = null;
-        currentChatId = null;
-        document.getElementById('app-container').classList.add('hidden');
-        document.getElementById('lobby-screen').classList.remove('hidden');
-    }
-
-    async function enterRoomById(roomId) {
-        leaveCurrentChatContext();
-        try {
-            const roomSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId));
-            if (!roomSnap.exists()) {
-                toast('Oda bulunamadı.', 'error');
-                return;
-            }
-            currentChatType = 'room';
-            currentRoomId = roomId;
-            currentChatId = 'room_' + roomId;
-            currentRoomInfo = roomSnap.val();
-            
-            switchToChatScreen();
-            document.getElementById('chat-title').textContent = currentRoomInfo.name;
-            document.getElementById('chat-avatar').src = currentRoomInfo.photoURL || defaultAvatar(currentRoomInfo.name);
-            document.getElementById('chat-online-badge').classList.add('hidden');
-            
-            loadRoomMembers(roomId);
-            listenToChatMessages();
-            listenToTyping();
-        } catch (e) {
-            toast('Odaya girilemedi.', 'error');
-        }
-    }
-
-    async function enterDM(otherUid) {
-        leaveCurrentChatContext();
-        try {
-            const userSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', otherUid));
-            if (!userSnap.exists()) {
-                toast('Kullanıcı bulunamadı.', 'error');
-                return;
-            }
-            const otherProfile = userSnap.val();
-            
-            currentChatType = 'dm';
-            currentDmUid = otherUid;
-            
-            const dmId = [myUid, otherUid].sort().join('_');
-            currentChatId = 'dm_' + dmId;
-
-            switchToChatScreen();
-            document.getElementById('chat-title').textContent = otherProfile.name;
-            document.getElementById('chat-avatar').src = otherProfile.photoURL || defaultAvatar(otherProfile.name);
-
-            const badge = document.getElementById('chat-online-badge');
-            const isOnline = otherProfile.lastActive && (Date.now() - otherProfile.lastActive < 15000);
-            if (isOnline) {
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-
-            const dmDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'dms', dmId);
-            await setDoc(dmDocRef, {
-                user1: myUid,
-                user1_name: myProfile.name,
-                user1_photo: myProfile.photoURL || '',
-                user2: otherUid,
-                user2_name: otherProfile.name,
-                user2_photo: otherProfile.photoURL || ''
-            });
-
-            listenToChatMessages();
-            listenToTyping();
-        } catch (e) {
-            toast('Sohbet açılamadı.', 'error');
-        }
-    }
-
-    // ============================================================
-    // MESAJLARIN DİNLENMESİ VE GÖNDERİLMESİ
-    // ============================================================
-    function listenToChatMessages() {
-        const path = 'messages_' + currentChatId;
-        const msgColRef = collection(db, 'artifacts', appId, 'public', 'data', path);
-        
-        activeChatUnsub = onSnapshot(msgColRef, (snapshot) => {
-            let list = [];
-            snapshot.forEach(docSnap => {
-                list.push({ id: docSnap.id, ...docSnap.data() });
-            });
-            
-            list.sort((a, b) => a.t - b.t);
-            
-            messagesCache = {};
-            document.getElementById('messages').innerHTML = '';
-            
-            list.forEach(msg => {
-                messagesCache[msg.id] = msg;
-                renderMsg(msg.id, msg);
+            // Aktif Oda Mesajları
+            let activeRoomMessages = messages.filter(m => m.roomId === (activeRoom ? activeRoom.id : '') && !(m.deletedFor && m.deletedFor.includes(user.uid)));
+            let messagesHTML = activeRoomMessages.map(msg => {
+                let isMe = msg.senderId === user.uid;
+                let isSystem = msg.senderId === 'system';
                 
-                if (msg.uid !== myUid && (!msg.seenBy || !msg.seenBy[myUid])) {
-                    updateDoc(doc(db, 'artifacts', appId, 'public', 'data', path, msg.id), {
-                        [`seenBy.${myUid}`]: true
+                if(isSystem) {
+                    return `<div class="flex justify-center my-2"><div class="bg-slate-800/80 text-gray-300 text-[11px] px-4 py-1.5 rounded-full">${msg.text}</div></div>`;
+                }
+
+                let alignment = isMe ? 'ml-auto bg-gradient-to-br from-[#1b2b38] to-[#121c25] rounded-tr-sm border border-cyan-900/30' : 'mr-auto bg-gradient-to-br from-[#121821] to-[#0c1016] rounded-tl-sm border border-slate-800/60';
+                
+                let replyHTML = msg.replyToSender ? `
+                    <div class="mb-2 bg-black/30 p-2 rounded border-l-2 border-cyan-400 text-xs text-gray-300">
+                        <span class="font-bold block text-cyan-400">${msg.replyToSender}</span>
+                        <span class="italic truncate block">${msg.replyToText}</span>
+                    </div>
+                ` : '';
+
+                let contentHTML = '';
+                if (msg.isDeleted) {
+                    contentHTML = `<div class="text-[13px] text-gray-500 italic flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> Bu mesaj silindi.</div>`;
+                } else {
+                    if (msg.type === 'image') contentHTML += `<img src="${msg.mediaUrl}" class="mb-2 rounded-lg max-h-60 object-contain w-full">`;
+                    if (msg.type === 'video') contentHTML += `<video src="${msg.mediaUrl}" controls class="mb-2 rounded-lg max-h-60 w-full"></video>`;
+                    if (msg.type === 'document') contentHTML += `<a href="${msg.mediaUrl}" download="${msg.text}" class="flex items-center gap-2 bg-slate-900 p-3 rounded-lg mb-2 text-cyan-400 text-xs hover:underline border border-slate-700"><i data-lucide="file-text" class="w-6 h-6"></i> ${msg.text}</a>`;
+                    
+                    if (msg.type === 'poll') {
+                        let totalVotes = Object.keys(msg.pollData.votes || {}).length;
+                        contentHTML += `
+                            <div class="bg-slate-900/50 p-3 rounded-xl border border-cyan-500/20 mb-2 w-full min-w-[200px]">
+                                <h5 class="font-bold text-xs text-white mb-2 flex items-center gap-1"><i data-lucide="bar-chart-2" class="w-4 h-4 text-cyan-400"></i> ${msg.pollData.question}</h5>
+                                <div class="space-y-1.5">
+                                    ${msg.pollData.options.map((opt, i) => {
+                                        let optVotes = Object.values(msg.pollData.votes || {}).filter(v => v === i).length;
+                                        let pct = totalVotes === 0 ? 0 : Math.round((optVotes / totalVotes) * 100);
+                                        let isMyVote = (msg.pollData.votes || {})[user.uid] === i;
+                                        return `
+                                            <div onclick="votePoll('${msg.id}', ${i})" class="relative overflow-hidden rounded border ${isMyVote ? 'border-cyan-500 bg-cyan-900/30' : 'border-slate-700 bg-slate-800'} p-2 cursor-pointer transition-colors">
+                                                <div class="absolute top-0 left-0 h-full bg-cyan-600/20" style="width: ${pct}%"></div>
+                                                <div class="relative z-10 flex justify-between text-xs text-gray-200">
+                                                    <span>${opt}</span><span class="font-mono text-cyan-400">${pct}% (${optVotes})</span>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    if (msg.type === 'text') contentHTML += `<div class="text-[13px] break-words">${msg.text}</div>`;
+                }
+
+                // Mesaj Menüsü
+                let menuDropdown = activeMessageMenu === msg.id && !msg.isDeleted ? `
+                    <div class="absolute right-0 bottom-6 w-36 bg-[#111622] border border-slate-700 rounded-lg shadow-xl z-20 py-1">
+                        <button onclick="confirmDelete('${msg.id}', false)" class="w-full text-left px-4 py-2 text-xs text-gray-300 hover:bg-slate-800 cursor-pointer">Benden Sil</button>
+                        ${isMe ? `<button onclick="confirmDelete('${msg.id}', true)" class="w-full text-left px-4 py-2 text-xs text-rose-400 hover:bg-slate-800 cursor-pointer">Herkesten Sil</button>` : ''}
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="flex flex-col max-w-[75%] rounded-2xl px-4 py-2.5 relative shadow-md group ${alignment}">
+                        ${(!isMe && activeRoom.type === 'public') ? `<div class="text-[10px] font-bold text-cyan-400 mb-1 flex items-center gap-1"><img src="logo.jpg" class="w-4 h-4 rounded-full"> ${msg.senderName}</div>` : ''}
+                        ${replyHTML}
+                        ${contentHTML}
+                        <div class="flex items-center justify-end gap-2 mt-1.5 text-[9px] text-gray-500 relative">
+                            <span>${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            ${!msg.isDeleted ? `
+                                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onclick="setReplyMessage('${msg.id}')" class="hover:text-cyan-400 cursor-pointer"><i data-lucide="corner-up-left" class="w-3 h-3"></i></button>
+                                    <button onclick="toggleMessageMenu('${msg.id}')" class="hover:text-white cursor-pointer"><i data-lucide="more-vertical" class="w-3 h-3"></i></button>
+                                </div>
+                                ${menuDropdown}
+                            ` : ''}
+                            ${(isMe && !msg.isDeleted) ? `<i data-lucide="check-check" class="w-3 h-3 text-cyan-500 ml-1"></i>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // --- KİŞİLER (KEŞFET) TAB ---
+            let usersHTML = `
+                <div class="p-2 space-y-4">
+                    <div>
+                        <h6 class="text-[10px] font-bold text-gray-500 uppercase px-2 mb-2">Genel Gruplar</h6>
+                        <div class="divide-y divide-slate-800/20">
+                            ${rooms.filter(r => r.type === 'public' && (!r.participants || !r.participants.includes(user.uid))).map(room => `
+                                <div class="flex items-center justify-between p-3 bg-slate-800/10 rounded-xl mb-1">
+                                    <div class="flex items-center gap-3">
+                                        <img src="${room.photoURL}" onerror="this.src='logo.jpg'" class="w-10 h-10 rounded-xl object-cover">
+                                        <div><h5 class="font-bold text-sm text-gray-100">${room.name}</h5><p class="text-[10px] text-gray-400">${room.participants ? room.participants.length : 0} Üye</p></div>
+                                    </div>
+                                    ${(room.joinRequests && room.joinRequests.includes(user.uid)) ? 
+                                        `<span class="text-[10px] text-amber-400 border border-amber-500/30 px-2 py-1 rounded">İstek Gönderildi</span>` : 
+                                        `<button onclick="requestToJoinGroup('${room.id}')" class="text-[11px] bg-cyan-600 text-white px-3 py-1.5 rounded-lg hover:bg-cyan-500 cursor-pointer">Katıl</button>`
+                                    }
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div>
+                        <h6 class="text-[10px] font-bold text-gray-500 uppercase px-2 mb-2">Sohbetod Kullanıcıları</h6>
+                        <div class="divide-y divide-slate-800/20">
+                            ${allUsers.map(targetUser => `
+                                <div onclick="startDirectChat('${targetUser.uid}')" class="flex items-center justify-between p-3 bg-slate-800/10 hover:bg-slate-800/30 rounded-xl mb-1 cursor-pointer">
+                                    <div class="flex items-center gap-3">
+                                        <img src="${targetUser.photoURL}" onerror="this.src='logo.jpg'" class="w-10 h-10 rounded-full object-cover">
+                                        <div>
+                                            <h5 class="font-bold text-sm text-gray-100">${targetUser.displayName}</h5>
+                                            <p class="text-[10px] text-gray-400 truncate max-w-[150px]">${targetUser.about || targetUser.email}</p>
+                                        </div>
+                                    </div>
+                                    <i data-lucide="message-square" class="w-4 h-4 text-gray-500"></i>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // --- DURUMLAR TAB ---
+            // Durumları kullanıcı bazında grupla
+            let statusGroups = {};
+            statusUpdates.forEach(st => {
+                if(!statusGroups[st.userId]) statusGroups[st.userId] = { userId: st.userId, userName: st.userName, userAvatar: st.userAvatar, updates: [] };
+                statusGroups[st.userId].updates.push(st);
+            });
+            let myStatus = statusGroups[user.uid];
+
+            let statusHTML = `
+                <div class="p-4 space-y-4">
+                    <div class="flex items-center gap-4 pb-4 border-b border-slate-800/80">
+                        <div onclick="openStatusModal(true)" class="relative w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center cursor-pointer border border-slate-700 overflow-hidden">
+                            <img src="${user.photoURL}" onerror="this.src='logo.jpg'" class="w-full h-full object-cover">
+                            <div class="absolute -bottom-1 -right-1 p-0.5 bg-cyan-500 rounded-full text-slate-950"><i data-lucide="plus" class="w-3 h-3"></i></div>
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-sm text-gray-100">Durumum</h5>
+                            <p class="text-xs text-gray-400">Resim, video veya yazı paylaşın</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <h6 class="text-[10px] font-bold text-gray-500 uppercase px-1">Bağlantıların Durumları</h6>
+                        ${Object.values(statusGroups).filter(s => s.userId !== user.uid).map(sg => `
+                            <div onclick="viewStatus('${sg.userId}')" class="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer hover:bg-slate-800/40">
+                                <div class="w-10 h-10 rounded-full border-[3px] border-cyan-400 border-dashed p-0.5 animate-[spin_10s_linear_infinite]">
+                                    <img src="${sg.userAvatar}" onerror="this.src='logo.jpg'" class="w-full h-full rounded-full object-cover">
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-sm text-gray-200">${sg.userName}</h5>
+                                    <span class="text-[10px] text-gray-500">${sg.updates.length} Paylaşım</span>
+                                </div>
+                            </div>
+                        `).join('')}
+
+                        ${myStatus ? `
+                            <div class="pt-4">
+                                <h6 class="text-[10px] font-bold text-cyan-500 uppercase px-1 mb-2">Benim Paylaşımlarım</h6>
+                                ${myStatus.updates.map(upd => `
+                                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/20 mb-1 border border-slate-800">
+                                        <div class="flex items-center gap-2">
+                                            ${upd.mediaType === 'image' ? '<i data-lucide="image" class="w-4 h-4 text-gray-400"></i>' : upd.mediaType === 'video' ? '<i data-lucide="video" class="w-4 h-4 text-gray-400"></i>' : '<i data-lucide="file-text" class="w-4 h-4 text-gray-400"></i>'}
+                                            <span class="text-xs text-gray-300 truncate max-w-[150px]">${upd.content || 'Medya Paylaşımı'}</span>
+                                        </div>
+                                        <button onclick="viewStatusLikes('${upd.id}')" class="text-[10px] text-cyan-400 flex items-center gap-1 bg-cyan-900/30 px-2 py-1 rounded cursor-pointer">
+                                            <i data-lucide="eye" class="w-3 h-3"></i> ${upd.viewers.length}
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            // ANA LAYOUT
+            appDiv.innerHTML = `
+                <div class="flex h-full w-full">
+                    <!-- SIDEBAR -->
+                    <div class="${sidebarHidden} w-full md:w-[380px] flex-col border-r border-slate-800/80 h-full bg-[#0a0d14]">
+                        <div class="p-4 flex justify-between items-center bg-[#0c0f16] border-b border-slate-800/80">
+                            <div onclick="toggleProfileSettings(true)" class="flex items-center gap-3 cursor-pointer">
+                                <img src="${user.photoURL}" onerror="this.src='logo.jpg'" class="w-10 h-10 rounded-full object-cover border border-slate-700">
+                                <div class="min-w-0">
+                                    <h4 class="font-bold text-sm text-gray-100 truncate">${user.displayName}</h4>
+                                    <p class="text-[10px] text-teal-400 flex items-center gap-1"><span class="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse"></span> Çevrimiçi</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="openNewGroupModal(true)" class="p-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 rounded-full cursor-pointer"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                                <button onclick="logoutApp()" class="p-2 hover:bg-red-500/10 text-red-400 rounded-full cursor-pointer"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- TAB SELECTION -->
+                        <div class="flex bg-[#0b0e14] border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider">
+                            <button onclick="switchTab('chats')" class="flex-1 py-3 text-center cursor-pointer ${activeTab === 'chats' ? 'border-b-2 border-cyan-400 text-cyan-400 bg-cyan-500/5' : 'text-gray-500 hover:text-gray-300'}">Sohbetler</button>
+                            <button onclick="switchTab('status')" class="flex-1 py-3 text-center cursor-pointer ${activeTab === 'status' ? 'border-b-2 border-cyan-400 text-cyan-400 bg-cyan-500/5' : 'text-gray-500 hover:text-gray-300'}">Durumlar</button>
+                            <button onclick="switchTab('discover')" class="flex-1 py-3 text-center cursor-pointer ${activeTab === 'discover' ? 'border-b-2 border-cyan-400 text-cyan-400 bg-cyan-500/5' : 'text-gray-500 hover:text-gray-300'}">Keşfet</button>
+                        </div>
+
+                        <!-- TAB CONTENT -->
+                        <div class="flex-1 overflow-y-auto custom-scrollbar">
+                            ${activeTab === 'chats' ? roomListHTML : activeTab === 'status' ? statusHTML : usersHTML}
+                        </div>
+                    </div>
+
+                    <!-- MAIN CHAT AREA -->
+                    <div class="${chatHidden} flex-1 flex-col h-full bg-[#040609] relative">
+                        ${activeRoom ? `
+                            <div class="px-5 py-3.5 flex justify-between items-center bg-[#0c0f16]/90 border-b border-slate-800/80 z-10">
+                                <div class="flex items-center gap-3 cursor-pointer" onclick="${activeRoom.type !== 'system' && activeRoom.type !== 'ai' ? 'toggleGroupInfo(true)' : ''}">
+                                    <button onclick="closeRoom(); event.stopPropagation();" class="md:hidden text-gray-400 p-1 cursor-pointer"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+                                    <img src="${activeRoom.photoURL}" onerror="this.src='logo.jpg'" class="w-10 h-10 rounded-${activeRoom.type === 'public' ? 'xl' : 'full'} object-cover border border-slate-700">
+                                    <div>
+                                        <h4 class="font-bold text-sm text-gray-100">${activeRoom.name}</h4>
+                                        <p class="text-[10px] text-gray-400">${activeRoom.type === 'ai' ? 'Sohbetod AI Asistanı aktif' : activeRoom.type === 'system' ? 'Sistem Bildirim Odası' : (activeRoom.participants ? activeRoom.participants.length + ' Üye (Oda Detayları İçin Tıkla)' : '')}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex-1 overflow-y-auto px-6 py-6 space-y-4 custom-scrollbar" style="background-image: radial-gradient(circle at 50% 50%, #171126 0%, #06090e 100%);">
+                                ${activeRoom.id === 'feedback-room' ? `
+                                    <div class="mx-auto max-w-sm bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl text-center text-xs mb-4">
+                                        <i data-lucide="award" class="w-8 h-8 text-amber-400 mx-auto mb-2"></i>
+                                        <h4 class="font-bold text-amber-400 mb-1">Şikayet ve Öneriler Merkezi</h4>
+                                        <p class="text-gray-400">Yazdığınız mesajlar otomatik formata getirilerek <b>yunusizzeddinguder@gmail.com</b> adresinize yönlendirilecektir.</p>
+                                    </div>
+                                ` : ''}
+                                ${messagesHTML}
+                                ${aiGeneratingText ? `<div class="bg-slate-800 text-gray-400 text-xs p-3 rounded-xl max-w-[200px] animate-pulse">Sohbetod AI Asistanı yazıyor...</div>` : ''}
+                                <div id="messagesEnd"></div>
+                            </div>
+
+                            ${replyingMessage ? `
+                                <div class="bg-slate-900 px-4 py-2 border-t border-cyan-500/20 flex justify-between items-center text-xs">
+                                    <div class="border-l-2 border-cyan-400 pl-2">
+                                        <span class="font-bold text-cyan-400 block">${replyingMessage.senderName}</span>
+                                        <span class="text-gray-400 truncate max-w-xs block">${replyingMessage.text}</span>
+                                    </div>
+                                    <button onclick="cancelReply()" class="text-gray-400 cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                </div>
+                            ` : ''}
+
+                            <div class="p-3 bg-[#0a0d14] border-t border-slate-800">
+                                <form onsubmit="handleChatSubmit(event)" class="flex items-center gap-2">
+                                    <button type="button" onclick="document.getElementById('chatFileInput').click()" class="p-2 text-gray-400 hover:text-cyan-400 cursor-pointer"><i data-lucide="paperclip" class="w-5 h-5"></i></button>
+                                    <input type="file" id="chatFileInput" class="hidden" accept="image/*,video/*,application/pdf" onchange="uploadFile(event)">
+                                    
+                                    ${activeRoom.type === 'public' ? `<button type="button" onclick="openPollModal(true)" class="p-2 text-purple-400 hover:text-purple-300 cursor-pointer"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></button>` : ''}
+
+                                    <div class="flex-1 bg-[#111622] rounded-2xl flex items-center border border-slate-700 px-2">
+                                        <input type="text" id="msgTextInput" autocomplete="off" placeholder="Mesaj yazın..." class="w-full bg-transparent text-sm text-gray-100 px-3 py-3 outline-none">
+                                        <button type="submit" class="m-1 p-2 bg-cyan-600 rounded-xl text-white cursor-pointer hover:bg-cyan-500 transition-colors"><i data-lucide="send" class="w-4 h-4"></i></button>
+                                    </div>
+                                </form>
+                            </div>
+                        ` : `
+                            <div class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#05070a]">
+                                <img src="logo.jpg" onerror="this.src='https://placehold.co/150/0f172a/06b6d4'" class="w-32 h-32 rounded-full border-4 border-cyan-500/20 shadow-2xl mb-6 object-cover">
+                                <h3 class="font-extrabold text-2xl text-gray-100 mb-2">Sohbetod Web Pro</h3>
+                                <p class="text-sm text-gray-400 max-w-md">Sohbetod AI Asistanı, şikayet hatları, gruplar, durum güncellemeleri ve dosya aktarımı tek bir merkezde.</p>
+                            </div>
+                        `}
+                    </div>
+                </div>
+
+                <!-- GRUP BİLGİ PANELİ (Sağdan Açılır) -->
+                ${showGroupInfoPanel && activeRoom ? `
+                    <div class="fixed inset-y-0 right-0 w-80 bg-[#0a0d14] border-l border-slate-800 flex flex-col z-30 animate-slide-in">
+                        <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-[#0c0f16]">
+                            <h4 class="text-sm font-bold text-gray-100 flex items-center gap-1.5"><i data-lucide="info" class="w-4 h-4 text-cyan-400"></i> Grup Detayları</h4>
+                            <button onclick="toggleGroupInfo(false)" class="text-gray-400 hover:text-white cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+                        </div>
+                        <div class="p-5 flex-1 overflow-y-auto space-y-6 custom-scrollbar">
+                            <div class="text-center pb-4 border-b border-slate-800/60 relative">
+                                <div class="relative inline-block">
+                                    <img src="${activeRoom.photoURL}" onerror="this.src='logo.jpg'" class="w-24 h-24 rounded-xl mx-auto object-cover border border-slate-700">
+                                    ${activeRoom.admins && activeRoom.admins.includes(user.uid) ? `
+                                        <button onclick="document.getElementById('gAvatarInput').click()" class="absolute bottom-0 right-0 p-1.5 bg-slate-800 rounded-full border border-slate-600 text-cyan-400 cursor-pointer"><i data-lucide="edit-3" class="w-3 h-3"></i></button>
+                                        <input type="file" id="gAvatarInput" class="hidden" accept="image/*" onchange="updateGroupAvatar(event)">
+                                    ` : ''}
+                                </div>
+                                <h5 class="font-bold text-base mt-3 text-white">${activeRoom.name}</h5>
+                                <p class="text-xs text-gray-400 mt-2 bg-slate-900 p-2 rounded-lg border border-slate-800">${activeRoom.about || 'Açıklama belirtilmemiş.'}</p>
+                            </div>
+
+                            ${activeRoom.admins && activeRoom.admins.includes(user.uid) && activeRoom.joinRequests && activeRoom.joinRequests.length > 0 ? `
+                                <div class="bg-amber-900/20 border border-amber-500/30 rounded-xl p-3">
+                                    <h6 class="text-[10px] font-bold text-amber-400 uppercase mb-2">Katılım İstekleri (${activeRoom.joinRequests.length})</h6>
+                                    ${activeRoom.joinRequests.map(uid => {
+                                        let reqUser = allUsers.find(u => u.uid === uid) || { displayName: 'Kullanıcı' };
+                                        return `
+                                            <div class="flex items-center justify-between bg-slate-900 p-2 rounded-lg mb-1 border border-slate-700">
+                                                <span class="text-xs text-gray-200 truncate">${reqUser.displayName}</span>
+                                                <div class="flex gap-1 shrink-0">
+                                                    <button onclick="approveJoinRequest('${activeRoom.id}', '${uid}')" class="text-[10px] bg-emerald-600 px-2 py-1 rounded text-white cursor-pointer font-bold">Kabul</button>
+                                                    <button onclick="rejectJoinRequest('${activeRoom.id}', '${uid}')" class="text-[10px] bg-rose-600 px-2 py-1 rounded text-white cursor-pointer font-bold">Red</button>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            ` : ''}
+
+                            ${activeRoom.type === 'public' && activeRoom.admins && activeRoom.admins.includes(user.uid) ? `
+                                <div>
+                                    <h6 class="text-[10px] font-bold text-cyan-400 uppercase mb-2">Kişi Davet Et (Gmail)</h6>
+                                    <div class="flex gap-2">
+                                        <input type="email" id="inviteEmailInput" placeholder="ornek@gmail.com" class="bg-[#111622] text-xs px-3 py-2 rounded-lg w-full border border-slate-800 outline-none">
+                                        <button onclick="inviteUserByGmail()" class="bg-cyan-600 hover:bg-cyan-500 px-3 py-1.5 rounded-lg text-xs font-bold text-white cursor-pointer">Ekle</button>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <div>
+                                <h6 class="text-[10px] font-bold text-gray-500 uppercase mb-2">Katılımcılar (${activeRoom.participants ? activeRoom.participants.length : 0})</h6>
+                                <div class="space-y-1.5">
+                                    <div class="flex items-center gap-3 bg-slate-800/30 p-2 rounded-lg border border-slate-700">
+                                        <img src="${user.photoURL}" onerror="this.src='logo.jpg'" class="w-8 h-8 rounded-full object-cover">
+                                        <span class="text-xs font-bold text-gray-100">${user.displayName} (Sen)</span>
+                                    </div>
+                                    ${allUsers.filter(u => activeRoom.participants && activeRoom.participants.includes(u.uid)).map(memb => `
+                                        <div class="flex items-center gap-3 bg-slate-800/10 p-2 rounded-lg border border-slate-800">
+                                            <img src="${memb.photoURL}" onerror="this.src='logo.jpg'" class="w-8 h-8 rounded-full object-cover">
+                                            <span class="text-xs text-gray-300">${memb.displayName}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <div class="pt-4">
+                                <button onclick="leaveGroup()" class="w-full py-2.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 font-bold rounded-xl text-xs hover:bg-rose-600 hover:text-white cursor-pointer transition-colors flex justify-center items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> Gruptan Ayrıl</button>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- YENİ GRUP OLUŞTURMA MODAL -->
+                ${showNewGroupModal ? `
+                    <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+                        <div class="w-full max-w-md bg-[#0c0f16] p-6 rounded-3xl border border-slate-800 shadow-2xl">
+                            <div class="flex justify-between items-center mb-5">
+                                <h3 class="font-bold text-lg text-white flex items-center gap-2"><i data-lucide="users" class="text-cyan-400"></i> Yeni Grup Kur</h3>
+                                <button onclick="openNewGroupModal(false)" class="text-gray-500 hover:text-white cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-[10px] text-cyan-400 font-bold uppercase mb-1 block">Grup Adı</label>
+                                    <input type="text" id="newGroupNameInput" placeholder="İsim..." class="w-full px-4 py-2.5 bg-[#111622] rounded-xl text-sm border border-slate-800 outline-none text-white">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-cyan-400 font-bold uppercase mb-1 block">Grup Hakkında</label>
+                                    <textarea id="newGroupAboutInput" placeholder="Açıklama..." class="w-full px-4 py-2.5 bg-[#111622] rounded-xl text-sm border border-slate-800 outline-none text-white h-20"></textarea>
+                                </div>
+                                <button onclick="createNewGroupSubmit()" class="w-full py-3.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-sm shadow-lg cursor-pointer transition-colors">Grubu Oluştur</button>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- ANKET OLUŞTURMA MODAL -->
+                ${showPollModal ? `
+                    <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+                        <div class="w-full max-w-sm bg-[#0c0f16] p-6 rounded-3xl border border-slate-800 shadow-2xl">
+                            <div class="flex justify-between items-center mb-5">
+                                <h3 class="font-bold text-base text-white flex items-center gap-1.5"><i data-lucide="bar-chart-2" class="text-purple-400"></i> Odada Anket Paylaş</h3>
+                                <button onclick="openPollModal(false)" class="text-gray-500 hover:text-white cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+                            </div>
+                            <div class="space-y-3">
+                                <input type="text" id="pollQuestionInput" placeholder="Sorunuz nedir?" class="w-full px-4 py-3 bg-[#111622] rounded-xl text-sm border border-slate-800 outline-none text-white font-bold">
+                                <input type="text" id="pollOpt1" placeholder="Seçenek 1" class="w-full px-4 py-2.5 bg-[#0a0d14] rounded-lg text-xs border border-slate-800 outline-none text-gray-200">
+                                <input type="text" id="pollOpt2" placeholder="Seçenek 2" class="w-full px-4 py-2.5 bg-[#0a0d14] rounded-lg text-xs border border-slate-800 outline-none text-gray-200">
+                                <button onclick="createPollSubmit()" class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-sm cursor-pointer mt-2">Paylaş</button>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- DURUM EKLEME MODAL -->
+                ${showStatusModal ? `
+                    <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+                        <div class="w-full max-w-md bg-[#0c0f16] p-6 rounded-3xl border border-slate-800 shadow-2xl">
+                            <h3 class="font-bold text-base text-white mb-4 flex items-center gap-2"><i data-lucide="globe" class="text-cyan-400"></i> Yeni Durum (Hikaye)</h3>
+                            <div class="space-y-4">
+                                <textarea id="statusTextInput" placeholder="Aklından neler geçiyor?..." class="w-full px-4 py-3 bg-[#111622] rounded-xl text-sm border border-slate-800 outline-none text-white h-24 custom-scrollbar"></textarea>
+                                
+                                ${newStatusMedia ? `
+                                    <div class="relative rounded-xl overflow-hidden border border-slate-700 max-h-40 flex justify-center bg-black">
+                                        <button onclick="removeStatusMedia()" class="absolute top-2 right-2 bg-black/70 p-1 rounded-full text-white cursor-pointer"><i data-lucide="x" class="w-3 h-3"></i></button>
+                                        ${newStatusMedia.type === 'video' ? `<video src="${newStatusMedia.url}" class="h-full"></video>` : `<img src="${newStatusMedia.url}" class="h-full object-contain">`}
+                                    </div>
+                                ` : ''}
+
+                                <div class="flex items-center gap-3">
+                                    <button onclick="document.getElementById('statusFileInput').click()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-cyan-400 flex items-center justify-center gap-2 cursor-pointer border border-slate-700"><i data-lucide="image" class="w-4 h-4"></i> Resim/Video Ekle</button>
+                                    <input type="file" id="statusFileInput" class="hidden" accept="image/*,video/*" onchange="uploadStatusMedia(event)">
+                                </div>
+                                <div class="flex justify-end gap-2 pt-2 border-t border-slate-800/50">
+                                    <button onclick="openStatusModal(false)" class="px-5 py-2.5 text-xs text-gray-400 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold cursor-pointer">İptal</button>
+                                    <button onclick="shareStatusSubmit()" class="px-6 py-2.5 text-xs bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl cursor-pointer">Ağa Gönder</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- SİSTEM PROFİLİ MODAL -->
+                ${showProfileSettings ? `
+                    <div class="fixed inset-0 z-50 bg-black/80 flex justify-end backdrop-blur-sm animate-fade-in">
+                        <div class="w-full max-w-md h-full bg-[#0a0d14] border-l border-slate-800 flex flex-col animate-slide-in">
+                            <div class="p-5 bg-[#0c0f16] flex items-center justify-between border-b border-slate-800">
+                                <h4 class="font-bold text-base text-gray-100 flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4 text-cyan-400"></i> Sistem Profili</h4>
+                                <button onclick="toggleProfileSettings(false)" class="text-gray-400 hover:text-white cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+                            </div>
+                            <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+                                <div class="text-center space-y-3">
+                                    <div class="relative inline-block cursor-pointer group" onclick="document.getElementById('profilePicInput').click()">
+                                        <img src="${user.photoURL}" onerror="this.src='logo.jpg'" class="w-24 h-24 rounded-full border-2 border-slate-700 object-cover">
+                                        <div class="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="edit-3" class="text-white w-6 h-6"></i></div>
+                                        <input type="file" id="profilePicInput" class="hidden" accept="image/*" onchange="updateProfilePic(event)">
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-xl text-white">${user.displayName}</h3>
+                                        <p class="text-xs text-gray-400">${user.email}</p>
+                                    </div>
+                                </div>
+                                <div class="bg-[#111622] p-4 rounded-xl border border-slate-800">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-[10px] text-cyan-500 font-bold uppercase">Hakkımda</span>
+                                        <button onclick="editAbout()" class="text-gray-400 hover:text-white cursor-pointer"><i data-lucide="edit-3" class="w-3 h-3"></i></button>
+                                    </div>
+                                    <p class="text-sm text-gray-200 bg-[#0a0d14] p-3 rounded-lg border border-slate-800/60">${user.about}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- FULLSCREEN DURUM İZLEME MODAL -->
+                ${currentStatusViewer ? `
+                    <div class="fixed inset-0 z-50 bg-black flex flex-col justify-between p-4 animate-fade-in">
+                        <div class="w-full max-w-md mx-auto pt-4 flex gap-1 z-20">
+                            <div class="h-1 bg-cyan-400 flex-1 rounded-full animate-[progress_5s_linear]"></div>
+                        </div>
+                        <div class="flex justify-between items-center max-w-md w-full mx-auto text-white mt-4 bg-black/40 p-3 rounded-2xl border border-white/10 z-20 backdrop-blur-md">
+                            <div class="flex items-center gap-3">
+                                <img src="${currentStatusViewer.userAvatar}" onerror="this.src='logo.jpg'" class="w-10 h-10 rounded-full object-cover border border-slate-700">
+                                <div>
+                                    <h5 class="font-bold text-sm text-white drop-shadow-md">${currentStatusViewer.userName}</h5>
+                                </div>
+                            </div>
+                            <button onclick="closeStatusViewer()" class="p-2 bg-white/10 rounded-full hover:bg-white/20 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+                        </div>
+                        
+                        <div class="flex-1 flex flex-col items-center justify-center max-w-md w-full mx-auto relative px-4">
+                            ${currentStatusViewer.updates[0].mediaUrl ? `
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                                    ${currentStatusViewer.updates[0].mediaType === 'video' ? `<video src="${currentStatusViewer.updates[0].mediaUrl}" autoplay loop class="w-full max-h-full object-contain rounded-xl opacity-90"></video>` : `<img src="${currentStatusViewer.updates[0].mediaUrl}" class="w-full max-h-full object-contain rounded-xl opacity-90">`}
+                                </div>
+                            ` : ''}
+                            ${currentStatusViewer.updates[0].content ? `
+                                <h2 class="text-3xl font-bold text-white text-center leading-tight drop-shadow-2xl z-10 bg-black/50 p-6 rounded-2xl backdrop-blur-sm border border-white/10 w-full">${currentStatusViewer.updates[0].content}</h2>
+                            ` : ''}
+                        </div>
+
+                        <!-- KALP (BEĞENİ) BUTONU -->
+                        <div class="max-w-md w-full mx-auto pb-6 z-20 text-center">
+                            <button onclick="likeStatus('${currentStatusViewer.updates[0].id}')" class="mx-auto flex flex-col items-center group cursor-pointer">
+                                <div class="bg-black/60 p-4 rounded-full border border-white/20 group-hover:bg-rose-500/20 group-hover:border-rose-500/50 transition-colors backdrop-blur-md">
+                                    <i data-lucide="heart" class="w-8 h-8 ${currentStatusViewer.updates[0].likes && currentStatusViewer.updates[0].likes.includes(user.uid) ? 'fill-rose-500 text-rose-500' : 'text-white'}"></i>
+                                </div>
+                                <span class="text-[10px] text-white mt-2 font-bold drop-shadow-md">${currentStatusViewer.updates[0].likes ? currentStatusViewer.updates[0].likes.length : 0} Beğeni</span>
+                            </button>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- DURUM GÖRENLER / BEĞENENLER LİSTESİ (SADECE KENDİ DURUMUN İÇİN) -->
+                ${statusViewModal.show ? `
+                    <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+                        <div class="w-full max-w-xs bg-[#0c0f16] p-5 rounded-3xl border border-slate-800 shadow-2xl">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-sm text-gray-100">Görüntüleyenler (${statusViewModal.views.length})</h3>
+                                <button onclick="closeStatusViews()" class="text-gray-500 hover:text-white cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+                            </div>
+                            <div class="max-h-48 overflow-y-auto space-y-2 custom-scrollbar">
+                                ${statusViewModal.views.map(vUid => {
+                                    let vUser = allUsers.find(u => u.uid === vUid) || { displayName: 'Kullanıcı' };
+                                    let isLiked = statusViewModal.likes.includes(vUid);
+                                    return `
+                                        <div class="flex items-center justify-between bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                                            <span class="text-xs text-gray-200 font-bold truncate">${vUser.displayName}</span>
+                                            ${isLiked ? '<i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-rose-500"></i>' : ''}
+                                        </div>
+                                    `;
+                                }).join('')}
+                                ${statusViewModal.views.length === 0 ? '<p class="text-xs text-gray-500 text-center py-4">Henüz kimse görmedi.</p>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            lucide.createIcons();
+            
+            // Re-focus the input if it was focused before render
+            if (activeInputId && document.getElementById(activeInputId)) {
+                let input = document.getElementById(activeInputId);
+                input.focus();
+                // Move cursor to end
+                if(input.value) { let val = input.value; input.value = ''; input.value = val; }
+            }
+
+            const end = document.getElementById('messagesEnd');
+            if(end) end.scrollIntoView();
+        }
+
+        // --- GLOBAL ACTIONS (BUTON FONKSİYONLARI) ---
+        // Tüm bu fonksiyonlar onclick içerisinde temizce çalışacak
+
+        function changeAuthStep(step) { authStep = step; render(); }
+        function switchTab(tab) { activeTab = tab; render(); }
+        function toggleProfileSettings(show) { showProfileSettings = show; render(); }
+        function toggleGroupInfo(show) { showGroupInfoPanel = show; render(); }
+        function openNewGroupModal(show = true) { showNewGroupModal = show; newGroupName=''; newGroupAbout=''; render(); }
+        function openPollModal(show = true) { showPollModal = show; pollQuestion=''; pollOptions=['','']; render(); }
+        function openStatusModal(show = true) { showStatusModal = show; newStatusText=''; newStatusMedia=null; render(); }
+        function closeRoom() { activeRoom = null; replyingMessage = null; render(); }
+        function cancelReply() { replyingMessage = null; render(); }
+        function closeStatusViewer() { currentStatusViewer = null; render(); }
+        function closeStatusViews() { statusViewModal = { show: false, views: [], likes: [] }; render(); }
+        function removeStatusMedia() { newStatusMedia = null; render(); }
+        function toggleMessageMenu(msgId) { activeMessageMenu = activeMessageMenu === msgId ? null : msgId; render(); }
+
+        function loginUser() {
+            let email = document.getElementById('emailInput').value.trim();
+            let name = document.getElementById('nameInput').value.trim();
+            if(!email || !name) return;
+            user = { uid: 'u_' + Date.now(), displayName: name, email: email, photoURL: 'logo.jpg', about: 'Sohbetod Web Kullanıyor' };
+            localStorage.setItem('sohbetod_user', JSON.stringify(user));
+            authStep = 'app';
+            render();
+        }
+
+        function logoutApp() {
+            localStorage.removeItem('sohbetod_user');
+            user = null; authStep = 'landing'; activeRoom = null;
+            render();
+        }
+
+        function selectRoom(id) {
+            activeRoom = rooms.find(r => r.id === id);
+            replyingMessage = null;
+            render();
+        }
+
+        function handleChatSubmit(e) {
+            e.preventDefault();
+            let input = document.getElementById('msgTextInput');
+            if(!input) return;
+            let raw = input.value.trim();
+            if(!raw) return;
+            
+            let msg = { id: 'm_' + Date.now(), roomId: activeRoom.id, senderId: user.uid, senderName: user.displayName, text: raw, timestamp: new Date().toISOString(), type: 'text' };
+            if (replyingMessage) {
+                msg.replyToSender = replyingMessage.senderName;
+                msg.replyToText = replyingMessage.text;
+                replyingMessage = null;
+            }
+            messages.push(msg);
+            activeRoom.lastMessage = raw;
+            playSynthSound('sent');
+
+            // Feedback Odası Maile Yönlendirme
+            if (activeRoom.id === 'feedback-room') {
+                setTimeout(() => {
+                    let subject = encodeURIComponent("Sohbetod Şikayet/Öneri - " + user.displayName);
+                    let body = encodeURIComponent("Kullanıcı: " + user.displayName + "\nE-posta: " + user.email + "\n\nMesaj: " + raw);
+                    window.location.href = `mailto:yunusizzeddinguder@gmail.com?subject=${subject}&body=${body}`;
+                    
+                    messages.push({ id: 'sys_' + Date.now(), roomId: 'feedback-room', senderId: 'system', senderName: 'Sistem', text: 'Mesajınız cihazınızın mail uygulaması üzerinden yunusizzeddinguder@gmail.com adresine aktarılıyor.', timestamp: new Date().toISOString(), type: 'text' });
+                    render();
+                }, 500);
+            }
+
+            // AI Entegrasyonu
+            if (activeRoom.type === 'ai') {
+                aiGeneratingText = true;
+                render();
+                setTimeout(() => {
+                    aiGeneratingText = false;
+                    messages.push({ id: 'ai_' + Date.now(), roomId: activeRoom.id, senderId: 'ai', senderName: 'Sohbetod AI Asistanı', text: '"' + raw + '" sorunuzu anladım. Size en iyi şekilde yardımcı olmak için buradayım. (HTML ortamında yapay zeka simüle edilmektedir).', timestamp: new Date().toISOString(), type: 'text' });
+                    activeRoom.lastMessage = "Yapay zeka yanıtladı.";
+                    playSynthSound('received');
+                    render();
+                }, 1500);
+            } else {
+                render();
+            }
+        }
+
+        function uploadFile(e) {
+            let file = e.target.files[0];
+            if(!file) return;
+            if(file.size > 2000000) { showToast("Dosya çok büyük (Maks 2MB)!"); return; }
+            let reader = new FileReader();
+            reader.onload = function(ev) {
+                let type = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document';
+                messages.push({ id: 'f_' + Date.now(), roomId: activeRoom.id, senderId: user.uid, senderName: user.displayName, text: file.name, mediaUrl: ev.target.result, type: type, timestamp: new Date().toISOString() });
+                activeRoom.lastMessage = "📎 " + file.name;
+                playSynthSound('sent');
+                render();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function startDirectChat(uid) {
+            let target = allUsers.find(u => u.uid === uid);
+            let exist = rooms.find(r => r.type === 'direct' && r.participants && r.participants.includes(target.uid) && r.participants.includes(user.uid));
+            if(exist) { activeRoom = exist; } 
+            else {
+                let nRoom = { id: 'rm_' + Date.now(), name: target.displayName, type: 'direct', photoURL: target.photoURL, participants: [user.uid, target.uid], lastMessage: 'Sohbet oluşturuldu.', lastMessageTime: new Date().toISOString() };
+                rooms.push(nRoom); activeRoom = nRoom;
+            }
+            activeTab = 'chats'; render();
+        }
+
+        function inviteUserByGmail() {
+            let em = document.getElementById('inviteEmailInput').value.trim().toLowerCase();
+            if(!em) return;
+            let target = allUsers.find(u => u.email.toLowerCase() === em);
+            if(target) {
+                if(!activeRoom.participants) activeRoom.participants = [];
+                if(activeRoom.participants.includes(target.uid)) {
+                    showToast("Kullanıcı zaten grupta!");
+                } else {
+                    activeRoom.participants.push(target.uid);
+                    messages.push({ id: 'sys_'+Date.now(), roomId: activeRoom.id, senderId: 'system', senderName: 'Sistem', text: target.displayName + ' gruba eklendi.', timestamp: new Date().toISOString(), type: 'text' });
+                    showToast(target.displayName + " başarıyla eklendi!");
+                }
+            } else {
+                showToast("Sistemde bu e-posta ile kayıtlı kullanıcı bulunamadı.");
+            }
+            document.getElementById('inviteEmailInput').value = '';
+            render();
+        }
+
+        function createNewGroupSubmit() {
+            let name = document.getElementById('newGroupNameInput').value.trim();
+            let about = document.getElementById('newGroupAboutInput').value.trim();
+            if(!name) return;
+            let nRoom = { id: 'rm_' + Date.now(), name: name, type: 'public', about: about, photoURL: 'logo.jpg', participants: [user.uid], creator: user.uid, admins: [user.uid], joinRequests: [], lastMessage: 'Grup kuruldu.', lastMessageTime: new Date().toISOString() };
+            rooms.push(nRoom); activeRoom = nRoom;
+            showNewGroupModal = false; render();
+        }
+
+        function createPollSubmit() {
+            let q = document.getElementById('pollQuestionInput').value.trim();
+            let o1 = document.getElementById('pollOpt1').value.trim();
+            let o2 = document.getElementById('pollOpt2').value.trim();
+            if(!q || !o1 || !o2) return;
+            messages.push({ id: 'p_' + Date.now(), roomId: activeRoom.id, senderId: user.uid, senderName: user.displayName, type: 'poll', pollData: { question: q, options: [o1, o2], votes: {} }, timestamp: new Date().toISOString() });
+            activeRoom.lastMessage = "📊 Anket paylaşıldı.";
+            playSynthSound('sent');
+            showPollModal = false; render();
+        }
+
+        function votePoll(msgId, idx) {
+            let m = messages.find(msg => msg.id === msgId);
+            if(m && m.pollData) {
+                m.pollData.votes = m.pollData.votes || {};
+                m.pollData.votes[user.uid] = idx;
+                render();
+            }
+        }
+
+        function uploadStatusMedia(e) {
+            let file = e.target.files[0];
+            if(!file) return;
+            let reader = new FileReader();
+            reader.onload = function(ev) {
+                newStatusMedia = { url: ev.target.result, type: file.type.startsWith('video/') ? 'video' : 'image' };
+                render();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function shareStatusSubmit() {
+            let txt = document.getElementById('statusTextInput').value.trim();
+            if(!txt && !newStatusMedia) return;
+            statusUpdates.push({ id: 'st_' + Date.now(), userId: user.uid, userName: user.displayName, userAvatar: user.photoURL, content: txt, mediaUrl: newStatusMedia ? newStatusMedia.url : null, mediaType: newStatusMedia ? newStatusMedia.type : null, viewers: [], likes: [], timestamp: new Date().toISOString() });
+            showStatusModal = false; render();
+        }
+
+        function viewStatus(uid) {
+            let userStats = statusUpdates.filter(s => s.userId === uid);
+            if(userStats.length > 0) {
+                currentStatusViewer = { userId: uid, userName: userStats[0].userName, userAvatar: userStats[0].userAvatar, updates: userStats };
+                // Kendi durumum değilse görüldü ekle
+                if(uid !== user.uid) {
+                    userStats.forEach(st => {
+                        if(!st.viewers.includes(user.uid)) st.viewers.push(user.uid);
                     });
                 }
-            });
-            
-            const box = document.getElementById('messages');
-            box.scrollTop = box.scrollHeight;
-        });
-    }
-
-    async function send(extra = {}) {
-        const inp = document.getElementById('msg-input');
-        const text = inp.value.trim();
-        if (!text && !extra.img && !extra.voice && !extra.poll) return;
-
-        const path = 'messages_' + currentChatId;
-        const payload = {
-            uid: myUid,
-            u: myProfile.name,
-            photoURL: myProfile.photoURL || '',
-            m: text || null,
-            img: extra.img || null,
-            v: extra.voice || null,
-            poll: extra.poll || null,
-            t: Date.now(),
-            seenBy: { [myUid]: true }
-        };
-
-        if (replyContext) {
-            payload.replyTo = {
-                id: replyContext.id,
-                u: replyContext.data.u,
-                m: replyContext.data.m || 'Dosya / Görsel'
-            };
-        }
-
-        try {
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', path), payload);
-            inp.value = '';
-            cancelReply();
-            
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'typing', currentChatId), {
-                [`users.${myUid}`]: null
-            });
-        } catch (e) {
-            toast('Mesaj gönderilemedi.', 'error');
-        }
-    }
-
-    async function sendImage(inputEl) {
-        const file = inputEl.files[0];
-        if (!file) return;
-        try {
-            const dataUrl = await resizeImageFile(file, 900, 0.75);
-            send({ img: dataUrl });
-        } catch (e) {
-            toast('Fotoğraf işlenemedi.', 'error');
-        }
-        inputEl.value = '';
-    }
-
-    // ============================================================
-    // MESAJ RENDERING & OKUNDU SİSTEMİ
-    // ============================================================
-    function renderMsg(id, data) {
-        const html = buildMsgHTML(id, data);
-        const existing = document.getElementById('msg-' + id);
-        
-        if (!html) { if (existing) existing.remove(); return; }
-        
-        const box = document.getElementById('messages');
-        if (existing) {
-            existing.outerHTML = html;
-        } else {
-            box.insertAdjacentHTML('beforeend', html);
-        }
-    }
-
-    function buildMsgHTML(id, data) {
-        if (!data) return '';
-        if (data.deletedFor && data.deletedFor[myUid]) return '';
-        
-        const isMe = data.uid === myUid;
-        
-        if (data.deletedForEveryone) {
-            return `
-                <div class="flex flex-col max-w-[85%] ${isMe ? 'self-end' : 'self-start'}" id="msg-${id}">
-                    <div class="px-3 py-1.5 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 italic text-zinc-400 text-xs text-center shadow-sm">
-                        🚫 Bu mesaj silindi.
-                    </div>
-                </div>
-            `;
-        }
-
-        // Tiklerin Belirlenmesi
-        let tickHTML = '';
-        if (isMe) {
-            const readCount = Object.keys(data.seenBy || {}).filter(uid => uid !== myUid).length;
-            if (readCount > 0) {
-                tickHTML = `<span class="text-blue-500 font-bold ml-1">✔✔</span>`;
-            } else {
-                tickHTML = `<span class="text-zinc-400 ml-1">✔</span>`;
+                render();
             }
         }
 
-        const replyHTML = data.replyTo ? `<div class="border-l-2 border-primary bg-zinc-100 dark:bg-zinc-800 p-1.5 rounded text-xs mb-1"><b>${escapeHTML(data.replyTo.u)}:</b> ${escapeHTML(data.replyTo.m)}</div>` : '';
-        const reactionsHTML = data.reactions ? Object.entries(data.reactions).map(([emoji, uids]) => {
-            const hasMine = uids[myUid];
-            return `<span class="inline-block px-1.5 py-0.5 rounded-full border text-xs cursor-pointer ${hasMine ? 'bg-blue-100 border-primary' : 'bg-white border-zinc-200 text-zinc-800'}" onclick="reactToMessage('${id}','${emoji}')">${emoji} ${Object.keys(uids).length}</span>`;
-        }).join('') : '';
-
-        const timeStr = new Date(data.t).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-
-        let content = '';
-        if (data.poll) content += buildPollHTML(id, data.poll);
-        if (data.img) content += `<img src="${data.img}" class="rounded-xl max-w-full max-h-60 object-cover cursor-zoom-in" onclick="window.open(this.src)">`;
-        if (data.v) content += `<audio src="${data.v}" controls class="max-w-[200px] sm:max-w-[250px] h-9"></audio>`;
-        if (data.m) content += `<p class="text-sm whitespace-pre-wrap break-all msg-text">${escapeHTML(data.m)}</p>`;
-
-        return `
-            <div class="flex flex-col max-w-[85%] ${isMe ? 'self-end' : 'self-start'} group" id="msg-${id}">
-                <div class="flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}">
-                    <div class="p-3 rounded-2xl shadow-sm ${isMe ? 'bg-primary text-white rounded-tr-none' : 'bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-tl-none'}">
-                        ${!isMe && currentChatType === 'room' ? `<span class="block text-[10px] font-bold text-primary dark:text-blue-400 mb-0.5">${escapeHTML(data.u)}</span>` : ''}
-                        ${replyHTML}
-                        ${content}
-                        <div class="flex items-center justify-end gap-1.5 text-[9px] opacity-75 mt-1">
-                            ${data.edited ? '<span>düzenlendi</span>' : ''}
-                            <span>${timeStr}</span>
-                            ${tickHTML}
-                        </div>
-                    </div>
-                    <button onclick="openMessageActions('${id}')" class="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition text-xs">⋯</button>
-                </div>
-                ${reactionsHTML ? `<div class="flex gap-1 flex-wrap mt-1 ${isMe ? 'justify-end' : 'justify-start'}">${reactionsHTML}</div>` : ''}
-            </div>
-        `;
-    }
-
-    // ============================================================
-    // MESAJ AKSİYONLARI, REAKSİYON, CEVAPLAMA, DÜZENLEME, SİLME
-    // ============================================================
-    function openMessageActions(id) {
-        const data = messagesCache[id];
-        if (!data || data.deletedForEveryone) return;
-
-        const isMine = data.uid === myUid;
-        const isAdmin = currentChatType === 'room' && isCurrentUserAdmin();
-        const hasText = !!data.m;
-
-        let html = `
-            <h3 class="text-sm font-bold text-center mb-3">Mesaj Seçenekleri</h3>
-            <div class="flex justify-around mb-4 bg-zinc-100 dark:bg-zinc-800 p-2 rounded-2xl">
-                ${REACTIONS.map(emoji => `<button onclick="reactToMessage('${id}','${emoji}')" class="text-2xl hover:scale-125 transition">${emoji}</button>`).join('')}
-            </div>
-            <button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold hover:bg-zinc-100 transition" onclick="replyToMessage('${id}')">↩️ Yanıtla</button>
-        `;
-
-        if (hasText) {
-            html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold hover:bg-zinc-100 transition" onclick="copyMessageText('${id}')">📋 Metni Kopyala</button>`;
-        }
-        if (isMine && hasText) {
-            html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold text-primary hover:bg-zinc-100 transition" onclick="editMessageStart('${id}')">✏️ Düzenle</button>`;
-        }
-        
-        html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold text-red-500 hover:bg-zinc-100 transition" onclick="deleteMessageForMe('${id}')">🗑️ Benden Sil</button>`;
-        
-        if (isMine || isAdmin) {
-            html += `<button class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl text-sm font-semibold text-red-500 hover:bg-zinc-100 transition" onclick="deleteMessageForEveryone('${id}')">🗑️ Herkesten Sil</button>`;
-        }
-
-        openSheet(html);
-    }
-
-    async function reactToMessage(id, emoji) {
-        const path = 'messages_' + currentChatId;
-        const data = messagesCache[id];
-        const currentReactions = data.reactions || {};
-        const userMap = currentReactions[emoji] || {};
-
-        if (userMap[myUid]) {
-            delete userMap[myUid];
-        } else {
-            userMap[myUid] = true;
-        }
-
-        currentReactions[emoji] = userMap;
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', path, id), { reactions: currentReactions });
-            closeSheet();
-        } catch (e) {}
-    }
-
-    function replyToMessage(id) {
-        const data = messagesCache[id];
-        if (!data) return;
-        replyContext = { id, data };
-        const bar = document.getElementById('reply-preview-bar');
-        bar.classList.remove('hidden');
-        bar.querySelector('.reply-text').textContent = `${data.u}: ${data.m || 'Dosya / Görsel'}`;
-        closeSheet();
-    }
-
-    function cancelReply() {
-        replyContext = null;
-        document.getElementById('reply-preview-bar').classList.add('hidden');
-    }
-
-    function copyMessageText(id) {
-        const data = messagesCache[id];
-        if (data && data.m) {
-            document.execCommand('copy');
-            toast('Mesaj kopyalandı.');
-        }
-        closeSheet();
-    }
-
-    function editMessageStart(id) {
-        const data = messagesCache[id];
-        if (!data) return;
-        closeSheet();
-        const html = `
-            <h3 class="text-sm font-bold mb-3">Mesajı Düzenle</h3>
-            <textarea id="edit-msg-input" class="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm focus:outline-none mb-3 text-zinc-900 dark:text-white">${escapeHTML(data.m)}</textarea>
-            <button onclick="saveMessageEdit('${id}')" class="w-full py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-md transition">Kaydet</button>
-        `;
-        openSheet(html);
-    }
-
-    async function saveMessageEdit(id) {
-        const path = 'messages_' + currentChatId;
-        const newText = document.getElementById('edit-msg-input').value.trim();
-        if (!newText) return;
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', path, id), { m: newText, edited: true });
-            closeSheet();
-            toast('Düzenlendi.');
-        } catch (e) {}
-    }
-
-    async function deleteMessageForMe(id) {
-        const path = 'messages_' + currentChatId;
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', path, id), {
-                [`deletedFor.${myUid}`]: true
-            });
-            closeSheet();
-            toast('Mesaj sizden silindi.');
-        } catch (e) {}
-    }
-
-    async function deleteMessageForEveryone(id) {
-        const path = 'messages_' + currentChatId;
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', path, id), {
-                deletedForEveryone: true,
-                m: null,
-                img: null,
-                v: null,
-                poll: null
-            });
-            closeSheet();
-            toast('Mesaj herkesten silindi.');
-        } catch (e) {}
-    }
-
-    // ============================================================
-    // MÜKEMMELLEŞTİRİLMİŞ SES KAYIT ALTYAPISI
-    // ============================================================
-    async function startRecording() {
-        try {
-            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (e) {
-            toast('Mikrofon izni reddedildi.', 'error');
-            return;
-        }
-
-        mediaRecorder = new MediaRecorder(mediaStream);
-        audioChunks = [];
-        
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-        mediaRecorder.onstop = () => {
-            const blob = new Blob(audioChunks, { type: 'audio/webm' });
-            recordedBlobForSend = blob;
-            recordedBlobURL = URL.createObjectURL(blob);
-            
-            document.getElementById('record-bar').classList.add('hidden');
-            const previewBar = document.getElementById('voice-preview-bar');
-            previewBar.classList.remove('hidden');
-            document.getElementById('voice-preview-audio').src = recordedBlobURL;
-        };
-
-        mediaRecorder.start();
-        recordSeconds = 0;
-        updateRecordTimer();
-        
-        recordTimerInterval = setInterval(() => {
-            recordSeconds++;
-            updateRecordTimer();
-        }, 1000);
-
-        document.getElementById('record-bar').classList.remove('hidden');
-        document.getElementById('input-row').classList.add('hidden');
-    }
-
-    function updateRecordTimer() {
-        const m = String(Math.floor(recordSeconds / 60)).padStart(2, '0');
-        const s = String(recordSeconds % 60).padStart(2, '0');
-        document.getElementById('record-timer').textContent = `${m}:${s}`;
-    }
-
-    function cancelRecording() {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.onstop = null;
-            mediaRecorder.stop();
-        }
-        stopAllTracks();
-        clearInterval(recordTimerInterval);
-        document.getElementById('record-bar').classList.add('hidden');
-        document.getElementById('input-row').classList.remove('hidden');
-    }
-
-    function stopRecordingAndPreview() {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-        clearInterval(recordTimerInterval);
-        stopAllTracks();
-    }
-
-    function discardRecording() {
-        document.getElementById('voice-preview-bar').classList.add('hidden');
-        document.getElementById('input-row').classList.remove('hidden');
-        recordedBlobForSend = null;
-        recordedBlobURL = null;
-    }
-
-    function sendRecording() {
-        const blob = recordedBlobForSend;
-        if (!blob) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            send({ voice: reader.result });
-            discardRecording();
-        };
-        reader.readAsDataURL(blob);
-    }
-
-    function stopAllTracks() {
-        if (mediaStream) {
-            mediaStream.getTracks().forEach(track => track.stop());
-            mediaStream = null;
-        }
-    }
-
-    // ============================================================
-    // ANKET SİSTEMİ
-    // ============================================================
-    function openPollCreator() {
-        const html = `
-            <h3 class="text-sm font-bold text-center mb-3">📊 Yeni Anket</h3>
-            <input id="poll-q" type="text" placeholder="Anket Sorusu" class="w-full px-4 py-2 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 mb-3 focus:outline-none text-zinc-900 dark:text-white">
-            <div id="poll-opts" class="flex flex-col gap-2 mb-3">
-                <input class="poll-option-input w-full px-4 py-2 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none text-zinc-900 dark:text-white" placeholder="Seçenek 1">
-                <input class="poll-option-input w-full px-4 py-2 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none text-zinc-900 dark:text-white" placeholder="Seçenek 2">
-            </div>
-            <button onclick="addPollOptionField()" class="w-full text-center py-2 text-xs text-primary font-bold bg-blue-50 dark:bg-zinc-800 rounded-xl mb-3">+ Seçenek Ekle</button>
-            <button onclick="submitPoll()" class="w-full py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl transition">Anketi Gönder</button>
-        `;
-        openSheet(html);
-    }
-
-    function addPollOptionField() {
-        const wrap = document.getElementById('poll-opts');
-        if (wrap.children.length >= 6) { toast('En fazla 6 seçenek ekleyebilirsiniz.', 'error'); return; }
-        const inp = document.createElement('input');
-        inp.className = "poll-option-input w-full px-4 py-2 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none text-zinc-900 dark:text-white";
-        inp.placeholder = `Seçenek ${wrap.children.length + 1}`;
-        wrap.appendChild(inp);
-    }
-
-    function submitPoll() {
-        const q = document.getElementById('poll-q').value.trim();
-        const optionEls = document.querySelectorAll('.poll-option-input');
-        const options = [];
-        optionEls.forEach(el => {
-            const v = el.value.trim();
-            if (v) options.push({ text: v, votes: {} });
-        });
-
-        if (!q || options.length < 2) {
-            toast('Soruyu ve en az 2 seçeneği doldurun.', 'error');
-            return;
-        }
-
-        send({ poll: { question: q, options } });
-        closeSheet();
-    }
-
-    function buildPollHTML(id, poll) {
-        const totalVotes = poll.options.reduce((sum, o) => sum + Object.keys(o.votes || {}).length, 0);
-        
-        const optsHTML = poll.options.map((o, index) => {
-            const count = Object.keys(o.votes || {}).length;
-            const pct = totalVotes ? Math.round((count / totalVotes) * 100) : 0;
-            const hasVoted = o.votes && o.votes[myUid];
-
-            return `
-                <button onclick="votePoll('${id}', ${index})" class="w-full text-left p-2.5 rounded-xl border text-xs font-semibold relative overflow-hidden transition-all duration-200 mb-1.5 ${hasVoted ? 'border-primary' : 'border-zinc-100 dark:border-zinc-800'}">
-                    <div class="absolute top-0 left-0 h-full bg-blue-100 dark:bg-blue-900/30 transition-all duration-300 pointer-events-none" style="width: ${pct}%"></div>
-                    <div class="relative flex justify-between pointer-events-none text-zinc-800 dark:text-zinc-200">
-                        <span>${escapeHTML(o.text)}</span>
-                        <span>%${pct} (${count})</span>
-                    </div>
-                </button>
-            `;
-        }).join('');
-
-        return `
-            <div class="p-2 min-w-[200px] text-zinc-900 dark:text-white">
-                <p class="font-bold text-sm mb-2">📊 ${escapeHTML(poll.question)}</p>
-                ${optsHTML}
-                <span class="block text-[10px] text-zinc-450 mt-1">${totalVotes} oy kullanıldı</span>
-            </div>
-        `;
-    }
-
-    async function votePoll(msgId, optIndex) {
-        const path = 'messages_' + currentChatId;
-        const msg = messagesCache[msgId];
-        if (!msg || !msg.poll) return;
-
-        const options = msg.poll.options;
-        options.forEach((opt, idx) => {
-            if (!opt.votes) opt.votes = {};
-            if (idx === optIndex) {
-                if (opt.votes[myUid]) {
-                    delete opt.votes[myUid];
+        function likeStatus(stId) {
+            let st = statusUpdates.find(s => s.id === stId);
+            if(st) {
+                if(!st.likes.includes(user.uid)) {
+                    st.likes.push(user.uid);
                 } else {
-                    opt.votes[myUid] = true;
+                    st.likes = st.likes.filter(id => id !== user.uid);
                 }
+                render();
+            }
+        }
+
+        function viewStatusLikes(stId) {
+            let st = statusUpdates.find(s => s.id === stId);
+            if(st) {
+                statusViewModal = { show: true, views: st.viewers, likes: st.likes };
+                render();
+            }
+        }
+
+        function confirmDelete(msgId, forEveryone) {
+            let msg = messages.find(m => m.id === msgId);
+            if (forEveryone) {
+                msg.isDeleted = true;
+                msg.text = '🚫 Bu mesaj silindi.';
+                msg.mediaUrl = null;
+                msg.pollData = null;
             } else {
-                delete opt.votes[myUid];
+                msg.deletedFor = msg.deletedFor || [];
+                msg.deletedFor.push(user.uid);
             }
-        });
+            activeMessageMenu = null;
+            render();
+        }
 
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', path, msgId), {
-                'poll.options': options
-            });
-        } catch (e) {}
-    }
+        function setReplyMessage(id) {
+            replyingMessage = messages.find(m => m.id === id);
+            render();
+        }
 
-    // ============================================================
-    // REAL-TIME YAZIYOR (TYPING) SİSTEMİ
-    // ============================================================
-    function listenToTyping() {
-        const typingDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'typing', currentChatId);
-        typingUnsub = onSnapshot(typingDocRef, (snap) => {
-            if (!snap.exists()) return;
-            const data = snap.val();
-            const users = data.users || {};
-            
-            const typingList = Object.entries(users)
-                .filter(([uid, name]) => uid !== myUid && name)
-                .map(([uid, name]) => name);
+        function leaveGroup() {
+            if(!activeRoom.participants) return;
+            activeRoom.participants = activeRoom.participants.filter(id => id !== user.uid);
+            messages.push({ id: 'sys_'+Date.now(), roomId: activeRoom.id, senderId: 'system', senderName: 'Sistem', text: user.displayName + ' gruptan ayrıldı.', timestamp: new Date().toISOString(), type: 'text' });
+            activeRoom = null; showGroupInfoPanel = false;
+            render();
+        }
 
-            const container = document.getElementById('typing-indicator');
-            const label = document.getElementById('typing-users');
-            
-            if (typingList.length > 0) {
-                label.textContent = typingList.join(', ');
-                container.classList.remove('hidden');
-            } else {
-                container.classList.add('hidden');
+        function updateProfilePic(e) {
+            let file = e.target.files[0];
+            if(!file) return;
+            let reader = new FileReader();
+            reader.onload = function(ev) {
+                user.photoURL = ev.target.result;
+                localStorage.setItem('sohbetod_user', JSON.stringify(user));
+                render();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateGroupAvatar(e) {
+            let file = e.target.files[0];
+            if(!file) return;
+            let reader = new FileReader();
+            reader.onload = function(ev) {
+                activeRoom.photoURL = ev.target.result;
+                render();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function editAbout() {
+            let n = prompt("Hakkında bilginiz:", user.about);
+            if(n) {
+                user.about = n;
+                localStorage.setItem('sohbetod_user', JSON.stringify(user));
+                render();
             }
-        });
-    }
-
-    let typingTimeout = null;
-    async function handleTyping() {
-        const typingDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'typing', currentChatId);
-        try {
-            await setDoc(typingDocRef, {
-                [`users.${myUid}`]: myProfile.name
-            }, { merge: true });
-
-            if (typingTimeout) clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(async () => {
-                await setDoc(typingDocRef, {
-                    [`users.${myUid}`]: null
-                }, { merge: true });
-            }, 3000);
-        } catch (e) {}
-    }
-
-    // ============================================================
-    // MESAJ ARAMA ALTYAPISI
-    // ============================================================
-    function toggleSearchInput() {
-        const bar = document.getElementById('search-bar');
-        bar.classList.toggle('hidden');
-        if (!bar.classList.contains('hidden')) {
-            document.getElementById('search-input').focus();
-        } else {
-            document.getElementById('search-input').value = '';
-            filterMessages();
         }
-    }
 
-    function filterMessages() {
-        const query = document.getElementById('search-input').value.toLowerCase().trim();
-        const wrappers = document.querySelectorAll('#messages > div');
-        
-        wrappers.forEach(wrap => {
-            const textEl = wrap.querySelector('.msg-text');
-            if (!textEl) return;
-            
-            const text = textEl.textContent.toLowerCase();
-            if (text.includes(query)) {
-                wrap.style.display = 'flex';
-            } else {
-                wrap.style.display = 'none';
+        // Gruba Katılma ve Onay Sistemi
+        function requestToJoinGroup(roomId) {
+            let r = rooms.find(room => room.id === roomId);
+            if(r) {
+                if(!r.joinRequests) r.joinRequests = [];
+                if(!r.joinRequests.includes(user.uid)) r.joinRequests.push(user.uid);
+                showToast("Katılma isteği yöneticilere gönderildi.");
+                render();
             }
-        });
-    }
-
-    // ============================================================
-    // RESİM/URL/GÖRSEL DESTEKLİ DUVAR KAĞIDI SEÇİCİ
-    // ============================================================
-    function openWallpaperCustomizer() {
-        const html = `
-            <h3 class="text-sm font-bold text-center mb-3">🎨 Arka Plan Seç</h3>
-            <div class="grid grid-cols-4 gap-2 mb-4">
-                <button onclick="setWallpaper('solid', '#efeae2')" class="h-10 rounded-lg bg-[#efeae2] border border-zinc-300"></button>
-                <button onclick="setWallpaper('solid', '#dbf5e7')" class="h-10 rounded-lg bg-[#dbf5e7] border border-zinc-300"></button>
-                <button onclick="setWallpaper('solid', '#e3eff9')" class="h-10 rounded-lg bg-[#e3eff9] border border-zinc-300"></button>
-                <button onclick="setWallpaper('solid', '#f1e2f5')" class="h-10 rounded-lg bg-[#f1e2f5] border border-zinc-300"></button>
-            </div>
-            <div class="mb-3 text-left">
-                <label class="text-[10px] text-zinc-500 font-bold uppercase mb-1 block">Özel Görsel URL'si</label>
-                <div class="flex gap-2">
-                    <input id="wallpaper-url-input" type="text" placeholder="https://resim-linki.com" class="flex-1 px-3 py-1.5 rounded-lg border text-xs focus:outline-none bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-white">
-                    <button onclick="applyUrlWallpaper()" class="px-3 py-1 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-lg transition">Uygula</button>
-                </div>
-            </div>
-            <div class="text-left">
-                <label class="text-[10px] text-zinc-500 font-bold uppercase mb-1 block">Cihazdan Yükle</label>
-                <input type="file" accept="image/*" class="hidden" id="wallpaper-file" onchange="uploadWallpaperImage(this)">
-                <button onclick="document.getElementById('wallpaper-file').click()" class="w-full py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 text-xs font-bold rounded-xl border border-zinc-200 dark:border-zinc-700 transition">Resim Seç</button>
-            </div>
-        `;
-        openSheet(html);
-    }
-
-    function setWallpaper(type, val) {
-        localStorage.setItem(`wallpaper_${currentChatId}`, JSON.stringify({ type, val }));
-        loadStoredWallpaper();
-        closeSheet();
-    }
-
-    function applyUrlWallpaper() {
-        const url = document.getElementById('wallpaper-url-input').value.trim();
-        if (url) {
-            setWallpaper('image', url);
         }
-    }
 
-    async function uploadWallpaperImage(input) {
-        const file = input.files[0];
-        if (!file) return;
-        try {
-            const dataUrl = await resizeImageFile(file, 1000, 0.7);
-            setWallpaper('image', dataUrl);
-        } catch (e) {
-            toast('Görsel yüklenemedi.', 'error');
-        }
-    }
-
-    function loadStoredWallpaper() {
-        const data = localStorage.getItem(`wallpaper_${currentChatId}`);
-        const el = document.getElementById('messages');
-        if (!data) {
-            el.style.backgroundImage = 'none';
-            el.style.backgroundColor = '#efeae2';
-            return;
-        }
-        const { type, val } = JSON.parse(data);
-        if (type === 'solid') {
-            el.style.backgroundImage = 'none';
-            el.style.backgroundColor = val;
-        } else if (type === 'image') {
-            el.style.backgroundImage = `url('${val}')`;
-            el.style.backgroundSize = 'cover';
-            el.style.backgroundPosition = 'center';
-        }
-    }
-
-    // ============================================================
-    // GRUP BİLGİ DETAYI & YÖNETİCİ EKLEME/ÇIKARMA MODÜLLERİ
-    // ============================================================
-    function toggleInfo() {
-        const p = document.getElementById('info-panel');
-        if (p.classList.contains('hidden')) {
-            p.classList.remove('hidden');
-            setTimeout(() => {
-                p.classList.remove('right-[-100%]');
-                p.classList.add('right-0');
-            }, 10);
-            renderInfoPanelContent();
-        } else {
-            p.classList.add('right-[-100%]');
-            p.classList.remove('right-0');
-            setTimeout(() => {
-                p.classList.add('hidden');
-            }, 300);
-        }
-    }
-
-    function closeInfoPanel() {
-        const p = document.getElementById('info-panel');
-        p.classList.add('right-[-100%]');
-        p.classList.remove('right-0');
-        setTimeout(() => {
-            p.classList.add('hidden');
-        }, 300);
-    }
-
-    function isCurrentUserAdmin() {
-        if (!currentRoomInfo) return false;
-        return currentRoomInfo.admins && currentRoomInfo.admins[myUid];
-    }
-
-    async function loadRoomMembers(roomId) {
-        const roomDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
-        activeRoomMembersUnsub = onSnapshot(roomDocRef, async (snap) => {
-            if (!snap.exists()) return;
-            const data = snap.val();
-            currentRoomInfo = data;
-            currentRoomAdmins = data.admins || {};
-            
-            const memberIds = Object.keys(data.members || {});
-            const profiles = {};
-            
-            for (let uid of memberIds) {
-                const userSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid));
-                if (userSnap.exists()) {
-                    profiles[uid] = userSnap.val();
-                }
+        function approveJoinRequest(roomId, uid) {
+            let r = rooms.find(room => room.id === roomId);
+            if(r) {
+                r.joinRequests = r.joinRequests.filter(id => id !== uid);
+                r.participants.push(uid);
+                let target = allUsers.find(u => u.uid === uid) || { displayName: 'Kullanıcı' };
+                messages.push({ id: 'sys_'+Date.now(), roomId: roomId, senderId: 'system', senderName: 'Sistem', text: target.displayName + ' gruba katıldı.', timestamp: new Date().toISOString(), type: 'text' });
+                showToast("Kullanıcı onaylandı.");
+                render();
             }
-            
-            currentRoomMembers = profiles;
-            if (!document.getElementById('info-panel').classList.contains('hidden')) {
-                renderInfoPanelContent();
+        }
+
+        function rejectJoinRequest(roomId, uid) {
+            let r = rooms.find(room => room.id === roomId);
+            if(r) {
+                r.joinRequests = r.joinRequests.filter(id => id !== uid);
+                showToast("İstek reddedildi.");
+                render();
             }
-        });
-    }
-
-    function renderInfoPanelContent() {
-        const info = currentRoomInfo;
-        const amAdmin = isCurrentUserAdmin();
-        
-        const membersHTML = Object.entries(currentRoomMembers).map(([uid, profile]) => {
-            const isFounder = info.founder === uid;
-            const isAdmin = currentRoomAdmins[uid];
-            return `
-                <div class="flex items-center justify-between p-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition cursor-pointer" onclick="openMemberProfile('${uid}')">
-                    <div class="flex items-center gap-2.5">
-                        <img class="w-9 h-9 rounded-full object-cover" src="${profile.photoURL || defaultAvatar(profile.name)}">
-                        <div class="flex flex-col text-left">
-                            <span class="text-sm font-bold">${escapeHTML(profile.name)}</span>
-                            ${isFounder ? '<span class="text-[9px] bg-red-105 text-red-500 font-bold px-1.5 py-0.2 rounded-full w-max mt-0.5">Kurucu</span>' : (isAdmin ? '<span class="text-[9px] bg-blue-105 text-blue-500 font-bold px-1.5 py-0.2 rounded-full w-max mt-0.5">Yönetici</span>' : '')}
-                        </div>
-                    </div>
-                    ${amAdmin && uid !== myUid ? `<button onclick="event.stopPropagation(); openMemberAdminMenu('${uid}')" class="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">⋮</button>` : ''}
-                </div>
-            `;
-        }).join('');
-
-        document.getElementById('info-panel').innerHTML = `
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-base font-bold">Grup Detayları</h3>
-                <button onclick="closeInfoPanel()" class="text-zinc-400 text-lg">✕</button>
-            </div>
-            <div class="flex flex-col items-center text-center gap-2 mb-4 border-b border-zinc-100 dark:border-zinc-800 pb-4">
-                <img class="w-20 h-20 rounded-full object-cover border-4 border-primary shadow" src="${info.photoURL || defaultAvatar(info.name)}">
-                <h4 class="font-bold text-lg">${escapeHTML(info.name)}</h4>
-                <p class="text-xs text-zinc-500 dark:text-zinc-400 max-w-xs whitespace-pre-wrap">${escapeHTML(info.description || 'Grup açıklaması bulunmuyor.')}</p>
-                ${amAdmin ? `<button onclick="openEditRoomInfo()" class="text-xs text-primary font-bold hover:underline">✏️ Oda Bilgilerini Düzenle</button>` : ''}
-            </div>
-            <div class="mb-4">
-                <span class="text-xs text-zinc-500 font-bold uppercase block mb-2 text-left">Grup Üyeleri (${Object.keys(currentRoomMembers).length})</span>
-                <div class="flex flex-col gap-2 max-h-60 overflow-y-auto">${membersHTML}</div>
-            </div>
-            ${amAdmin ? `<button onclick="openAddMember()" class="w-full py-2.5 bg-primary hover:bg-primary-dark text-white text-xs font-bold rounded-xl mb-2 transition">+ Kişi Ekle</button>` : ''}
-            <button onclick="leaveRoom()" class="w-full py-2.5 bg-red-50 text-red-500 border border-red-200 dark:bg-red-950/20 dark:border-red-900 text-xs font-bold rounded-xl transition">Odayı Terk Et</button>
-        `;
-    }
-
-    function openEditRoomInfo() {
-        const info = currentRoomInfo;
-        const html = `
-            <h3 class="text-sm font-bold mb-3">Oda Bilgilerini Düzenle</h3>
-            <input id="edit-room-name" class="w-full px-4 py-2 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 mb-2 focus:outline-none text-zinc-900 dark:text-white" value="${escapeHTML(info.name)}" placeholder="Oda Adı">
-            <textarea id="edit-room-desc" class="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm focus:outline-none mb-2 text-zinc-900 dark:text-white" placeholder="Oda Açıklaması">${escapeHTML(info.description || '')}</textarea>
-            <input id="edit-room-pass" class="w-full px-4 py-2 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 mb-3 focus:outline-none text-zinc-900 dark:text-white" value="${escapeHTML(info.password)}" placeholder="Oda Giriş Şifresi">
-            <button onclick="saveRoomInfo()" class="w-full py-2.5 bg-primary hover:bg-primary-dark text-white text-sm font-bold rounded-xl shadow transition">Değişiklikleri Kaydet</button>
-        `;
-        openSheet(html);
-    }
-
-    async function saveRoomInfo() {
-        const name = document.getElementById('edit-room-name').value.trim();
-        const desc = document.getElementById('edit-room-desc').value.trim();
-        const pass = document.getElementById('edit-room-pass').value.trim();
-
-        if (!name || !pass) return;
-
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), {
-                name, description: desc, password: pass
-            });
-            closeSheet();
-            toast('Oda bilgileri güncellendi!');
-        } catch (e) {}
-    }
-
-    function openAddMember() {
-        const html = `
-            <h3 class="text-sm font-bold mb-3">Kişi Ekle</h3>
-            <p class="text-[10px] text-zinc-500 mb-3">E-posta adresi yazarak kişiyi doğrudan gruba ekleyin.</p>
-            <input id="add-member-email" type="email" placeholder="ornek@gmail.com" class="w-full px-4 py-2 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 mb-4 focus:outline-none text-zinc-900 dark:text-white">
-            <button onclick="submitAddMember()" class="w-full py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-sm transition">Doğrudan Ekle</button>
-        `;
-        openSheet(html);
-    }
-
-    async function submitAddMember() {
-        const email = document.getElementById('add-member-email').value.trim().toLowerCase();
-        if (!email) return;
-
-        toast('Kişi aranıyor ve ekleniyor...');
-        closeSheet();
-    }
-
-    function openMemberAdminMenu(uid) {
-        const profile = currentRoomMembers[uid];
-        if (!profile) return;
-        const isAdmin = currentRoomAdmins[uid];
-
-        const html = `
-            <h3 class="text-sm font-bold mb-3 text-center">${escapeHTML(profile.name)}</h3>
-            <button onclick="toggleMemberAdmin('${uid}')" class="w-full text-left py-2.5 px-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl mb-2 text-sm font-semibold hover:bg-zinc-100 transition">${isAdmin ? '⬇️ Yöneticilikten Çıkar' : '⬆️ Yönetici Yap'}</button>
-            <button onclick="removeMember('${uid}')" class="w-full text-left py-2.5 px-4 bg-red-50 text-red-500 rounded-xl text-sm font-semibold hover:bg-red-100 transition">🚪 Gruptan Çıkar</button>
-        `;
-        openSheet(html);
-    }
-
-    async function toggleMemberAdmin(uid) {
-        const currentAdmins = currentRoomInfo.admins || {};
-        if (currentAdmins[uid]) {
-            delete currentAdmins[uid];
-        } else {
-            currentAdmins[uid] = true;
         }
 
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { admins: currentAdmins });
-            closeSheet();
-            toast('Yönetici yetkileri güncellendi.');
-        } catch (e) {}
-    }
-
-    async function removeMember(uid) {
-        if (!confirm('Bu kullanıcıyı gruptan çıkarmak istediğinize emin misiniz?')) return;
-        const currentMembers = currentRoomInfo.members || {};
-        const currentAdmins = currentRoomInfo.admins || {};
-        delete currentMembers[uid];
-        delete currentAdmins[uid];
-
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { members: currentMembers, admins: currentAdmins });
-            closeSheet();
-            toast('Gruptan çıkarıldı.');
-        } catch (e) {}
-    }
-
-    async function leaveRoom() {
-        if (!confirm('Bu odayı terk etmek istediğinize emin misiniz?')) return;
-        const currentMembers = currentRoomInfo.members || {};
-        delete currentMembers[myUid];
-
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', currentRoomId), { members: currentMembers });
-            goBackToLobby();
-        } catch (e) {}
-    }
-
-    async function openMemberProfile(uid) {
-        let profile = currentRoomMembers[uid];
-        if (!profile) {
-            const userSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', uid));
-            if (userSnap.exists()) profile = userSnap.val();
-        }
-        if (!profile) return;
-
-        const aboutHTML = profile.aboutPublic && profile.about ? `<p class="italic text-zinc-650 dark:text-zinc-350 border border-zinc-100 dark:border-zinc-800 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-850 text-left text-sm">${escapeHTML(profile.about)}</p>` : '<p class="italic text-zinc-400 text-sm">Hakkımda bilgisi paylaşılmamış.</p>';
-
-        const html = `
-            <div class="flex flex-col items-center gap-3 text-center">
-                <img class="w-20 h-20 rounded-full object-cover border-4 border-primary shadow" src="${profile.photoURL || defaultAvatar(profile.name)}">
-                <h4 class="font-bold text-lg">${escapeHTML(profile.name)}</h4>
-                ${aboutHTML}
-                ${uid !== myUid ? `<button onclick="closeSheet(); enterDM('${uid}')" class="w-full mt-3 py-2.5 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl text-sm transition shadow">💬 Özel Mesaj Gönder</button>` : ''}
-            </div>
-        `;
-        openSheet(html);
-    }
-
-    function shareRoom() {
-        const link = window.location.origin + window.location.pathname + '?room=' + currentRoomId;
-        document.execCommand('copy');
-        toast('Grup davet linki kopyalandı!');
-    }
-
-    function toggleDarkMode() {
-        document.documentElement.classList.toggle('dark');
-        const isDark = document.documentElement.classList.contains('dark');
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    }
-
-    // ============================================================
-    // MODÜL İÇİ TÜM AKTİF FONKSİYONLARIN GLOBAL SCOPE ENTEGRASYONU
-    // ============================================================
-    Object.assign(window, {
-        signOutApp, openMyProfileEditor, handleMyPhotoChange, saveMyProfile,
-        openCreateRoomModal, submitCreateRoom, openJoinRoomModal, submitJoinRoom,
-        enterRoomById, enterDM, goBackToLobby, shareRoom, toggleInfo, closeSheet, closeInfoPanel,
-        send, sendImage, startRecording, cancelRecording, stopRecordingAndPreview, discardRecording, sendRecording,
-        openPollCreator, addPollOptionField, submitPoll, votePoll,
-        openMessageActions, reactToMessage, replyToMessage, cancelReply,
-        copyMessageText, editMessageStart, saveMessageEdit,
-        deleteMessageForMe, deleteMessageForEveryone,
-        openEditRoomInfo, saveRoomInfo,
-        openAddMember, submitAddMember, openMemberAdminMenu, toggleMemberAdmin, removeMember, leaveRoom,
-        openMemberProfile, openFeaturesModal, openGuestLoginModal, submitGuestLogin, toggleDarkMode,
-        toggleSearchInput, filterMessages, openWallpaperCustomizer, setWallpaper, applyUrlWallpaper, uploadWallpaperImage,
-        handleTyping
-    });
-</script>
+        // --- İLK ÇALIŞTIRMA ---
+        render();
+    </script>
 </body>
 </html>
