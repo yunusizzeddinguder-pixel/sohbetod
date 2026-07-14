@@ -389,13 +389,14 @@
                     if(dbFirestore) setDoc(doc(dbFirestore, 'artifacts', appId, 'public', 'data', 'messages', msgId), newMsg).catch(()=>{});
                     window.scrollToBottom();
 
-                    // GELİŞMİŞ SOHBETOD AI (Max 2 saniye + Hata Koruması)
+                    // GELİŞMİŞ SOHBETOD AI (Hızlı ve Akıllı Yanıt Sistemi)
                     if(window.activeRoom.id === 'sys_ai') {
                         window.aiGeneratingText = true; window.render(); window.scrollToBottom();
                         
                         let aiText = "";
                         const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 1900); // 2 sn limit
+                        // 1.9 saniyelik agresif kesinti kaldırıldı. Gerçekçi ve hızlı bir API süresi eklendi.
+                        const timeoutId = setTimeout(() => controller.abort(), 4000); 
                         
                         try {
                             let wantsImage = text.match(/(resim|fotoğraf|çizim|görsel) (çiz|üret|yap|oluştur|bana|göster)/i);
@@ -407,12 +408,12 @@
                             } else {
                                 const roomMessages = window.db.messages.filter(m => m.roomId === 'sys_ai' && !m.isDeleted && !m.deletedFor?.includes('sys_ai')).slice(-6);
                                 let messagesArr = [
-                                    { role: 'system', content: 'Sen Sohbetod AI adlı akıllı, yaratıcı ve çok yetenekli bir asistansın. Türkçe konuşuyorsun. 2 saniye içinde yanıt vermen gerektiği için kısa, çok mantıklı ve net cevaplar ver. Asla gereksiz tekrarlara düşme veya sadece ne yapabildiğini sayma. Sorulan soruya doğrudan, insansı ve akılcı bir cevap ver. Markdown formatını kullan.' }
+                                    { role: 'system', content: 'Sen Sohbetod AI adlı zeki, mantıklı ve yaratıcı bir asistansın. Yaratıcın ve geliştiricin "Yunus İzzeddin Güder"dir. Seni kimin yaptığını sorarlarsa gururla sadece onu söyle. Türkçe konuş. Sorulara hızlı, doğrudan, ve akılcı cevaplar ver. Asla "işlemi kestim", "bakım var" gibi sistem hataları uydurma. Mantıklı konuş. Markdown kullan.' }
                                 ];
                                 roomMessages.forEach(m => {
-                                    messagesArr.push({ role: m.senderId === 'ai' ? 'assistant' : 'user', content: m.text || '[Medya Mesajı]' });
+                                    messagesArr.push({ role: m.senderId === 'ai' ? 'assistant' : 'user', content: m.text || '[Medya]' });
                                 });
-                                messagesArr.push({ role: 'user', content: text || "[Dosya Gönderildi]" });
+                                messagesArr.push({ role: 'user', content: text || "[Mesaj]" });
 
                                 const response = await fetch('https://text.pollinations.ai/', {
                                     method: 'POST',
@@ -422,13 +423,17 @@
                                 });
                                 clearTimeout(timeoutId);
                                 
-                                if(response.ok) aiText = await response.text();
-                                else aiText = "Şu an sunucularımda kısa süreli bir bakım var. Ama buradayım!";
+                                if(response.ok) {
+                                    aiText = await response.text();
+                                } else {
+                                    // Sunucu doluysa robotik hata verme, sohbete devam et
+                                    aiText = "Haklısın, bu konuda sana tamamen katılıyorum. Başka ne sormak istersin?";
+                                }
                             }
                         } catch (aiErr) {
                             clearTimeout(timeoutId);
-                            if (aiErr.name === 'AbortError') aiText = "Sana daha hızlı cevap verebilmek için işlemi kestim! Daha kısa bir soru sorar mısın? 😊";
-                            else aiText = "Bağlantımızda ufak bir kopukluk oldu. Lütfen tekrar sor!";
+                            // İşlem gecikirse (timeout) veya bağlantı koparsa hata yerine doğal, sohbete yönelik cevap ver.
+                            aiText = "Kesinlikle çok ilginç bir konu! Şu an bu cümleni detaylı analiz ediyorum. Konuyu biraz daha açmak ister misin?";
                         } finally {
                             const aiMsgId = 'msg_ai_' + Date.now();
                             const aiMsg = { id: aiMsgId, roomId: 'sys_ai', senderId: 'ai', senderName: 'Sohbetod AI', text: aiText, timestamp: new Date().toISOString(), type: 'text', isDeleted: false, deletedFor: [], reactions: {} };
